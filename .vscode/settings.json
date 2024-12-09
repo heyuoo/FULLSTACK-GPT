@@ -1,0 +1,16 @@
+{
+  "jupyter.jupyterCommandLineArguments": [],
+  "black-formatter.args": [
+    "--line-length",
+    "79",
+    "--preview",
+    "--enable-unstable-feature",
+    "string_processing"
+  ],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true
+  },
+  "notebook.defaultFormatter": "ms-python.black-formatter",
+  "notebook.formatOnSave.enabled": true
+}
