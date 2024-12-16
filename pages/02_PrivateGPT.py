@@ -30,25 +30,20 @@ class ChatCallbackHandler(BaseCallbackHandler):
 
 
 with st.sidebar:
-    model = st.selectbox("Choose Your model", ("mistral", "llama2"))
-    if model == "mistral":
-        llm = ChatOllama(
-            model="mistral:latest",
-            temperature=0.1,
-            streaming=True,
-            callbacks=[
-                ChatCallbackHandler(),
-            ],
-        )
-    else:
-        llm = ChatOllama(
-            model="llama2:latest",
-            temperature=0.1,
-            streaming=True,
-            callbacks=[
-                ChatCallbackHandler(),
-            ],
-        )
+    model_selection = st.selectbox(
+        "Choose a model:", options=["mistral", "llama2"]
+    )
+selected_model = f"{model_selection}:latest"
+
+
+llm = ChatOllama(
+    model=selected_model,
+    temperature=0.1,
+    streaming=True,
+    callbacks=[
+        ChatCallbackHandler(),
+    ],
+)
 
 
 @st.cache_data(show_spinner="Embedding file...")
@@ -65,7 +60,7 @@ def embed_file(file):
     )
     loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
-    embeddings = OllamaEmbeddings(model="llama2:latest")
+    embeddings = OllamaEmbeddings(model=selected_model)
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
         embeddings, cache_dir
     )
