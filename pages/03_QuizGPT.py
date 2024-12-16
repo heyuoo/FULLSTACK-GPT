@@ -270,6 +270,7 @@ if not docs:
 else:
     response = run_quiz_chain(docs, topic if topic else file.name)
     with st.form("questions_form"):
+        st.write(response)
         for question in response["questions"]:
             st.write(question["question"])
             value = st.radio(
