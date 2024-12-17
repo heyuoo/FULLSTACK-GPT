@@ -69,7 +69,7 @@ with st.sidebar:
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
         )
         st.stop()
-    elif len(api_key.strip()) <= 150:
+    if len(api_key.strip()) <= 150:
         st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
         st.markdown(
             "[🚀View on"
