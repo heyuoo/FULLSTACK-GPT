@@ -69,20 +69,20 @@ with st.sidebar:
         )
         st.stop()
 
-    if len(api_key.strip()) <= 150:
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-        )
-        st.stop()
+        if len(api_key.strip()) <= 150:
+            st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+            st.markdown(
+                "[🚀View on"
+                "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+            )
+            st.stop()
 
-    else:
-        st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-        )
+        else:
+            st.sidebar.success("API Key loaded successfully!")
+            st.markdown(
+                "[🚀View on"
+                "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+            )
 
 
 llm = ChatOpenAI(
