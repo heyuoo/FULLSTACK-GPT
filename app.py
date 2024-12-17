@@ -58,7 +58,6 @@ with st.sidebar:
 
     api_key = os.getenv("OPENAI_API_KEY")
 
-    # 환경 변수 확인
     if not api_key:
         try:
             api_key = st.secrets["OPENAI_API_KEY"]
@@ -73,7 +72,11 @@ with st.sidebar:
 
     if not api_key:
         st.error("API Key is required to proceed.")
-        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+
+    st.sidebar.write("")
+    st.sidebar.write("")
 
     st.sidebar.markdown(
         "[View on"
