@@ -32,7 +32,7 @@ class ChatCallbackHandler(BaseCallbackHandler):
 
 
 api_key = st.secrets["OPENAI_API_KEY"]
-print(st.secrets)
+st.write(st.secrets)
 
 llm = ChatOpenAI(
     api_key=api_key,
