@@ -31,11 +31,11 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-
+api_key = st.secrets["OPENAI_API_KEY"]
+print(st.secrets)
 
 llm = ChatOpenAI(
-    api_key=OPENAI_API_KEY,
+    api_key=api_key,
     temperature=0.1,
     streaming=True,
     callbacks=[
