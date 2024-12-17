@@ -91,6 +91,7 @@ jupyter_client>==8.3.1
 jupyter_core>==5.3.1
 kiwisolver>==1.4.5
 langchain>==0.0.332
+langchain-community>==-0.3.12
 langcodes>==3.3.0
 langsmith>==0.0.52
 layoutparser>==0.3.4
