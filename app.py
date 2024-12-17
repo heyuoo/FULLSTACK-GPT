@@ -7,6 +7,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores.faiss import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.callbacks.base import BaseCallbackHandler
+from langchain.memory import ConversationBufferMemory
 import streamlit as st
 
 st.set_page_config(
@@ -35,6 +36,11 @@ llm = ChatOpenAI(
     callbacks=[
         ChatCallbackHandler(),
     ],
+)
+
+memory = ConversationBufferMemory(
+    llm=llm,
+    memory_key="history",
 )
 
 
@@ -85,14 +91,19 @@ def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
 
+def load_memory(_):
+    return memory.load_memory_variables({})["history"]
+
+
 prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
             """
-            Answer the question using ONLY the following context. If you don't know the answer just say you don't know. DON'T make anything up.
+            Answer the question using ONLY the following context and history. If you don't know the answer just say you don't know. DON'T make anything up.
             
             Context: {context}
+            History: {history}
             """,
         ),
         ("human", "{question}"),
@@ -118,10 +129,14 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
+
 if file:
     retriever = embed_file(file)
     send_message("I'm ready! Ask away!", "ai", save=False)
     paint_history()
+    memory.save_context(
+        {"input": st.session_state["history_message"]}, {"output": ""}
+    )
     message = st.chat_input("Ask anything about your file...")
     if message:
         send_message(message, "human")
@@ -129,13 +144,19 @@ if file:
             {
                 "context": retriever | RunnableLambda(format_docs),
                 "question": RunnablePassthrough(),
+                "history": RunnableLambda(load_memory),
             }
             | prompt
             | llm
         )
         with st.chat_message("ai"):
             response = chain.invoke(message)
+            memory.save_context(
+                {"input": message}, {"output": response.content}
+            )
+            st.session_state["history_message"] = load_memory(message)
 
 
 else:
     st.session_state["messages"] = []
+    st.session_state["history_message"] = []
