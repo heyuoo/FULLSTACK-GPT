@@ -31,15 +31,19 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-st.sidebar.markdown("## Links")
-st.sidebar.markdown(
-    "[View on"
-    " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-)
-st.sidebar.info("This sidebar includes important links and settings.")
+with st.sidebar:
+    file = st.file_uploader(
+        "Upload a .txt .pdf or .docx file",
+        type=["pdf", "txt", "docx"],
+    )
 
-api_key = st.secrets.get("OPENAI_API_KEY", "")
-sidebar_api_key = st.sidebar.text_input(type="password", value=api_key)
+    st.sidebar.markdown(
+        "[View on"
+        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+    )
+
+    api_key = st.secrets.get["OPENAI_API_KEY"]
+    sidebar_api_key = st.sidebar.text_input(type="password", value=api_key)
 
 llm = ChatOpenAI(
     api_key=api_key,
@@ -136,13 +140,6 @@ Use this chatbot to ask questions to an AI about your files!
 Upload your files on the sidebar.
 """
 )
-
-with st.sidebar:
-    file = st.file_uploader(
-        "Upload a .txt .pdf or .docx file",
-        type=["pdf", "txt", "docx"],
-    )
-    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 
 if file:
