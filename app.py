@@ -69,24 +69,33 @@ with st.sidebar:
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
-        st.title(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-        )
 
         if (
             not api_key
             or not isinstance(api_key, str)
-            or len(api_key.strip()) <= 0
+            or len(api_key.strip()) <= 150
         ):
+
             st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+            st.title(
+                "[🚀View on"
+                "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+            )
             st.stop()
 
         if not api_key:
             st.error("API Key is required to proceed.")
+            st.title(
+                "[🚀View on"
+                "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+            )
             st.stop()
         else:
             st.sidebar.success("API Key loaded successfully!")
+            st.title(
+                "[🚀View on"
+                "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+            )
 
 
 llm = ChatOpenAI(
