@@ -68,7 +68,7 @@ with st.sidebar:
             )
 
         if not api_key:
-            st.error("API Key is required to proceed.")
+            st.warning("API Key is required to proceed.")
             st.markdown(
                 "[🚀View on"
                 "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
