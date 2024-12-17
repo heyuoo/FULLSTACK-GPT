@@ -30,10 +30,29 @@ Upload your files on the sidebar.
 )
 
 
+class ChatCallbackHandler(BaseCallbackHandler):
+    message = ""
+
+    def on_llm_start(self, *args, **kwargs):
+        self.message_box = st.empty()
+
+    def on_llm_end(self, *args, **kwargs):
+        save_message(self.message, "ai")
+
+    def on_llm_new_token(self, token, *args, **kwargs):
+        self.message += token
+        self.message_box.markdown(self.message)
+
+
 with st.sidebar:
     file = st.file_uploader(
         "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
+    )
+
+    st.sidebar.markdown(
+        "[View on"
+        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
     )
 
     api_key = os.getenv("OPENAI_API_KEY")
@@ -52,27 +71,8 @@ with st.sidebar:
             )
 
     if not api_key:
-
+        st.error("API Key is required to proceed.")
         st.stop()
-
-    st.sidebar.markdown(
-        "[View on"
-        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-    )
-
-
-class ChatCallbackHandler(BaseCallbackHandler):
-    message = ""
-
-    def on_llm_start(self, *args, **kwargs):
-        self.message_box = st.empty()
-
-    def on_llm_end(self, *args, **kwargs):
-        save_message(self.message, "ai")
-
-    def on_llm_new_token(self, token, *args, **kwargs):
-        self.message += token
-        self.message_box.markdown(self.message)
 
 
 llm = ChatOpenAI(
