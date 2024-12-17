@@ -56,6 +56,15 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
+    st.sidebar.write("")
+    st.sidebar.write("")
+    st.sidebar.markdown(
+        "[View on"
+        "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+    )
+    st.sidebar.write("")
+    st.sidebar.write("")
+
     api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
@@ -69,19 +78,19 @@ with st.sidebar:
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
+    if (
+        not api_key
+        or not isinstance(api_key, str)
+        or len(api_key.strip()) == 0
+    ):
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.stop()
 
     if not api_key:
         st.error("API Key is required to proceed.")
         st.stop()
     else:
         st.sidebar.success("API Key loaded successfully!")
-
-st.sidebar.write("")
-st.sidebar.write("")
-st.sidebar.markdown(
-    "[View on"
-    " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-)
 
 
 llm = ChatOpenAI(
