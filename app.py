@@ -17,18 +17,17 @@ st.set_page_config(
 )
 
 
-class ChatCallbackHandler(BaseCallbackHandler):
-    message = ""
+st.title("DocumentGPT")
 
-    def on_llm_start(self, *args, **kwargs):
-        self.message_box = st.empty()
+st.markdown(
+    """
+Welcome!
+            
+Use this chatbot to ask questions to an AI about your files!
 
-    def on_llm_end(self, *args, **kwargs):
-        save_message(self.message, "ai")
-
-    def on_llm_new_token(self, token, *args, **kwargs):
-        self.message += token
-        self.message_box.markdown(self.message)
+Upload your files on the sidebar.
+"""
+)
 
 
 with st.sidebar:
@@ -51,15 +50,29 @@ with st.sidebar:
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
-            st.sidebar.success("API Key loaded successfully!")
 
     if not api_key:
         st.error("API Key is required to proceed.")
+        st.stop()
 
     st.sidebar.markdown(
         "[View on"
         " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
     )
+
+
+class ChatCallbackHandler(BaseCallbackHandler):
+    message = ""
+
+    def on_llm_start(self, *args, **kwargs):
+        self.message_box = st.empty()
+
+    def on_llm_end(self, *args, **kwargs):
+        save_message(self.message, "ai")
+
+    def on_llm_new_token(self, token, *args, **kwargs):
+        self.message += token
+        self.message_box.markdown(self.message)
 
 
 llm = ChatOpenAI(
@@ -145,19 +158,6 @@ prompt = ChatPromptTemplate.from_messages(
         ),
         ("human", "{question}"),
     ]
-)
-
-
-st.title("DocumentGPT")
-
-st.markdown(
-    """
-Welcome!
-            
-Use this chatbot to ask questions to an AI about your files!
-
-Upload your files on the sidebar.
-"""
 )
 
 
