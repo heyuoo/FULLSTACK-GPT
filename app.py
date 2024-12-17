@@ -128,6 +128,7 @@ with st.sidebar:
         "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
     )
+    default_api_key = st.secrets.get("OPENAI_API_KEY", "")
 
 
 if file:
