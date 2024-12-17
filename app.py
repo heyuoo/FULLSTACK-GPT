@@ -72,6 +72,7 @@ with st.sidebar:
 
     if not api_key:
         st.error("API Key is required to proceed.")
+        st.stop()
     else:
         st.sidebar.success("API Key loaded successfully!")
 
