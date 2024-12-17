@@ -31,8 +31,15 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-api_key = st.secrets["OPENAI_API_KEY"]
-st.write(st.secrets)
+st.sidebar.markdown("## Links")
+st.sidebar.markdown(
+    "[View on"
+    " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+)
+st.sidebar.info("This sidebar includes important links and settings.")
+
+api_key = st.secrets.get("OPENAI_API_KEY", "")
+sidebar_api_key = st.sidebar.text_input(type="password", value=api_key)
 
 llm = ChatOpenAI(
     api_key=api_key,
