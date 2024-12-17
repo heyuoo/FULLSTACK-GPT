@@ -29,12 +29,6 @@ Upload your files on the sidebar.
 """
 )
 
-if "messages" not in st.session_state:
-    st.session_state["messages"] = []
-
-if "history_message" not in st.session_state:
-    st.session_state["history_message"] = []
-
 
 class ChatCallbackHandler(BaseCallbackHandler):
     message = ""
@@ -69,7 +63,7 @@ with st.sidebar:
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
         )
         st.stop()
-    if len(api_key.strip()) <= 150:
+    elif len(api_key.strip()) <= 150:
         st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
         st.markdown(
             "[🚀View on"
