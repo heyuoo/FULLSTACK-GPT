@@ -63,6 +63,14 @@ with st.sidebar:
         "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
     )
 
+    if (
+        not api_key
+        or not isinstance(api_key, str)
+        or len(api_key.strip()) <= 0
+    ):
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.stop()
+
     if not api_key:
         try:
             api_key = st.secrets["OPENAI_API_KEY"]
@@ -74,14 +82,6 @@ with st.sidebar:
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
-
-    if (
-        not api_key
-        or not isinstance(api_key, str)
-        or len(api_key.strip()) <= 0
-    ):
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.stop()
 
     if not api_key:
         st.error("API Key is required to proceed.")
