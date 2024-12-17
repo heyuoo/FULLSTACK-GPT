@@ -31,7 +31,11 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+
+
 llm = ChatOpenAI(
+    api_key=OPENAI_API_KEY,
     temperature=0.1,
     streaming=True,
     callbacks=[
@@ -131,6 +135,7 @@ with st.sidebar:
         "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
     )
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 
 if file:
