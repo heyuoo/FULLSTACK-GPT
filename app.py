@@ -29,6 +29,12 @@ Upload your files on the sidebar.
 """
 )
 
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+
+if "history_message" not in st.session_state:
+    st.session_state["history_message"] = []
+
 
 class ChatCallbackHandler(BaseCallbackHandler):
     message = ""
