@@ -52,7 +52,7 @@ class ChatCallbackHandler(BaseCallbackHandler):
 
 with st.sidebar:
     file = st.file_uploader(
-        "1️⃣ Upload a .txt .pdf or .docx file",
+        "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
     )
 
@@ -64,7 +64,7 @@ with st.sidebar:
 
         except KeyError:
             api_key = st.sidebar.text_input(
-                "1️⃣ Enter OpenAI API Key", type="password"
+                "Enter OpenAI API Key", type="password"
             )
 
         if not api_key:
