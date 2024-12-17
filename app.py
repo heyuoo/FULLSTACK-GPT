@@ -37,10 +37,13 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수 확인
+    api_key = os.getenv("OPENAI_API_KEY")
+    st.sidebar.success("API Key loaded successfully!")
+    # 환경 변수 확인
     if not api_key:
         try:
             api_key = st.secrets["OPENAI_API_KEY"]
+            st.sidebar.success("API Key loaded successfully!")
         except KeyError:
             st.sidebar.warning(
                 "API Key not found in secrets. Please enter it manually."
@@ -48,6 +51,11 @@ with st.sidebar:
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
+            st.sidebar.success("API Key loaded successfully!")
+
+    if not api_key:
+        st.error("API Key is required to proceed.")
+        st.stop()
 
     st.sidebar.markdown(
         "[View on"
