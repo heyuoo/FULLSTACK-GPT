@@ -44,10 +44,15 @@ with st.sidebar:
         try:
             api_key = st.secrets["OPENAI_API_KEY"]
         except KeyError:
+            st.sidebar.warning(
+                "API Key not found in secrets. Please enter it manually."
+            )
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
-        st.error("Please enter your OpenAI API Key to proceed.")
+
+    if not api_key:
+        st.error("API Key is required to proceed.")
         st.stop()
 
     st.sidebar.markdown(
