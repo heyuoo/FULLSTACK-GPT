@@ -37,22 +37,21 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    st.sidebar.header("Configuration")
+    api_key = st.sidebar.text_input(
+        "Enter your OpenAI API Key", type="password"
+    )
 
-    api_key = os.getenv("OPENAI_API_KEY")
+    # API 키 확인
     if not api_key:
-        try:
-            api_key = st.secrets["OPENAI_API_KEY"]
-        except KeyError:
-            st.sidebar.warning(
-                "API Key not found in secrets. Please enter it manually."
-            )
-            api_key = st.sidebar.text_input(
-                "Enter OpenAI API Key", type="password"
-            )
+        st.sidebar.warning("Please enter your OpenAI API Key to proceed.")
+        st.stop()
 
-    if not api_key:
-        st.error("API Key is required to proceed.")
+    # OpenAIEmbeddings 객체 생성
+    try:
+        embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+        st.sidebar.success("API Key loaded successfully!")
+    except Exception as e:
+        st.sidebar.error(f"Failed to load OpenAIEmbeddings: {e}")
         st.stop()
 
     st.sidebar.markdown(
