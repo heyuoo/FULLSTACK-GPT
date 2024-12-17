@@ -56,12 +56,12 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    st.markdown(
-        "(🚀View on"
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    st.title(
+        "[🚀View on"
         "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
     )
-
-    api_key = os.getenv("OPENAI_API_KEY")
 
     if not api_key:
         try:
