@@ -37,22 +37,17 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    api_key = st.sidebar.text_input(
-        "Enter your OpenAI API Key", type="password"
-    )
-
-    # API 키 확인
+    api_key = os.getenv("OPENAI_API_KEY")  # 환경 변수 확인
     if not api_key:
-        st.sidebar.warning("Please enter your OpenAI API Key to proceed.")
-        st.stop()
-
-    # OpenAIEmbeddings 객체 생성
-    try:
-        embeddings = OpenAIEmbeddings(openai_api_key=api_key)
-        st.sidebar.success("API Key loaded successfully!")
-    except Exception as e:
-        st.sidebar.error(f"Failed to load OpenAIEmbeddings: {e}")
-        st.stop()
+        try:
+            api_key = st.secrets["OPENAI_API_KEY"]
+        except KeyError:
+            st.sidebar.warning(
+                "API Key not found in secrets. Please enter it manually."
+            )
+            api_key = st.sidebar.text_input(
+                "Enter OpenAI API Key", type="password"
+            )
 
     st.sidebar.markdown(
         "[View on"
@@ -91,7 +86,9 @@ def embed_file(file):
     )
     loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(
+        api_key=api_key,
+    )
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
         embeddings, cache_dir
     )
