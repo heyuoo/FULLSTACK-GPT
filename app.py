@@ -37,26 +37,24 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    st.sidebar.markdown(
-        "[View on"
-        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-    )
+    st.sidebar.header("Configuration")
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         try:
             api_key = st.secrets["OPENAI_API_KEY"]
         except KeyError:
-            st.sidebar.warning(
-                "API Key not found in secrets. Please enter it manually."
-            )
             api_key = st.sidebar.text_input(
                 "Enter OpenAI API Key", type="password"
             )
-
-    if not api_key:
-        st.error("API Key is required to proceed.")
+        st.error("Please enter your OpenAI API Key to proceed.")
         st.stop()
+
+    st.sidebar.markdown(
+        "[View on"
+        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+    )
+
 
 llm = ChatOpenAI(
     api_key=api_key,
