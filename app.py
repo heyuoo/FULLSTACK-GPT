@@ -37,10 +37,7 @@ with st.sidebar:
         type=["pdf", "txt", "docx"],
     )
 
-    st.sidebar.markdown(
-        "[View on"
-        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-    )
+    st.sidebar.header("Configuration")
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -57,6 +54,12 @@ with st.sidebar:
     if not api_key:
         st.error("API Key is required to proceed.")
         st.stop()
+
+    st.sidebar.markdown(
+        "[View on"
+        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+    )
+
 
 llm = ChatOpenAI(
     api_key=api_key,
