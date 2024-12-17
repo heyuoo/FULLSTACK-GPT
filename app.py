@@ -42,8 +42,11 @@ with st.sidebar:
         " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
     )
 
-    api_key = st.secrets.get["OPENAI_API_KEY"]
-    sidebar_api_key = st.sidebar.text_input(type="password", value=api_key)
+    api_key = st.secrets["openai"]["OPENAI_API_KEY"]
+    if not api_key:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
 
 llm = ChatOpenAI(
     api_key=api_key,
