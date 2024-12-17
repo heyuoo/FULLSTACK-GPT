@@ -76,13 +76,12 @@ with st.sidebar:
     else:
         st.sidebar.success("API Key loaded successfully!")
 
-    st.sidebar.write("")
-    st.sidebar.write("")
-
-    st.sidebar.markdown(
-        "[View on"
-        " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
-    )
+st.sidebar.write("")
+st.sidebar.write("")
+st.sidebar.markdown(
+    "[View on"
+    " GitHub](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+)
 
 
 llm = ChatOpenAI(
