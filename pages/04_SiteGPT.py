@@ -66,4 +66,7 @@ if url:
             st.error("Please write down a Sitemap URL.")
     else:
         docs = load_website(url)
-        st.write(docs)
+
+        st.write("## Extracted Content:")
+        for doc in docs:
+            st.write(doc.page_content)
