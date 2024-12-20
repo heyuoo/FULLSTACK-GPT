@@ -18,15 +18,6 @@ st.set_page_config(
 
 st.title("QuizGPT")
 
-st.markdown(
-    """
-    Welcome to QuizGPT.
-                
-    I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
-                
-    Get started by uploading a file or searching on Wikipedia in the sidebar.
-    """
-)
 
 function = {
     "name": "get_questions",
@@ -168,34 +159,49 @@ with st.sidebar:
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
+if api_key:
 
+    llm = ChatOpenAI(
+        api_key=api_key,
+        temperature=0.1,
+        model="gpt-3.5-turbo-0125",
+        streaming=True,
+        callbacks=[StreamingStdOutCallbackHandler()],
+    ).bind(
+        function_call={
+            "name": "get_questions",
+        },
+        functions=[function],
+    )
 
-llm = ChatOpenAI(
-    api_key=api_key,
-    temperature=0.1,
-    model="gpt-3.5-turbo-0125",
-    streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
-).bind(
-    function_call={
-        "name": "get_questions",
-    },
-    functions=[function],
-)
+    prompt = PromptTemplate.from_template(
+        """
+    You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
 
+    You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
 
-prompt = PromptTemplate.from_template(
+    The difficulty level of the questions should be {difficulty}.
+
+    Context: {context}
+
     """
-You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
+    )
 
-You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
+else:
 
-The difficulty level of the questions should be {difficulty}.
+    st.markdown(
+        """
+    Welcome to QuizGPT.
+                
+    I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
+                
+    Get started by uploading a file or searching on Wikipedia in the sidebar.
 
-Context: {context}
+    To create a quiz, you need an OpenAI API key. Please enter the API key and try again.
 
-"""
-)
+
+    """
+    )
 
 
 if not docs:
