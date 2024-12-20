@@ -18,6 +18,15 @@ st.set_page_config(
 
 st.title("QuizGPT")
 
+st.markdown(
+    """
+    Welcome to QuizGPT.
+                
+    I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
+                
+    Get started by uploading a file or searching on Wikipedia in the sidebar.
+    """
+)
 
 function = {
     "name": "get_questions",
@@ -145,14 +154,14 @@ with st.sidebar:
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
-
+        st.stop()
     if len(api_key.strip()) <= 150:
         st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
         st.markdown(
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
-
+        st.stop()
     else:
         st.sidebar.success("API Key loaded successfully!")
         st.markdown(
