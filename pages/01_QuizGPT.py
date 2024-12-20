@@ -138,7 +138,61 @@ with st.sidebar:
         "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
     )
 
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.error("API Key is required to proceed.")
+
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
+
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
+
+
+llm = ChatOpenAI(
+    api_key=api_key,
+    temperature=0.1,
+    model="gpt-3.5-turbo-0125",
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
+).bind(
+    function_call={
+        "name": "get_questions",
+    },
+    functions=[function],
+)
+
+
+prompt = PromptTemplate.from_template(
+    """
+You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
+
+You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
+
+The difficulty level of the questions should be {difficulty}.
+
+Context: {context}
+
+"""
+)
+
+
 if not docs:
+    st.empty()
     st.markdown(
         """
     Welcome to QuizGPT.
@@ -149,49 +203,7 @@ if not docs:
     """
     )
 else:
-    with st.sidebar:
-
-        api_key = os.getenv("OPENAI_API_KEY")
-
-        if KeyError:
-            api_key = st.sidebar.text_input(
-                "Enter OpenAI API Key", type="password"
-            )
-        if not api_key:
-            st.error("API Key is required to proceed.")
-            st.stop()
-        if len(api_key.strip()) <= 150:
-            st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-
-        else:
-            st.sidebar.success("API Key loaded successfully!")
-
-    llm = ChatOpenAI(
-        api_key=api_key,
-        temperature=0.1,
-        model="gpt-3.5-turbo-0125",
-        streaming=True,
-        callbacks=[StreamingStdOutCallbackHandler()],
-    ).bind(
-        function_call={
-            "name": "get_questions",
-        },
-        functions=[function],
-    )
-
-    prompt = PromptTemplate.from_template(
-        """
-    You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
-
-    You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
-
-    The difficulty level of the questions should be {difficulty}.
-
-    Context: {context}
-
-    """
-    )
-
+    st.empty()
     response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
 
     if response and "questions" in response:
