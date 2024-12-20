@@ -189,7 +189,7 @@ Context: {context}
 )
 
 
-if not docs:
+if not docs and api_key:
     st.markdown(
         """
     Welcome to QuizGPT.
