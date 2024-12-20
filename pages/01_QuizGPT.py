@@ -63,7 +63,7 @@ function = {
 
 llm = ChatOpenAI(
     temperature=0.1,
-    model="gpt-3.5-turbo-0125",
+    model="gpt-3.5-turbo",
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
 ).bind(
