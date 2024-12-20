@@ -133,33 +133,6 @@ with st.sidebar:
         if topic:
             docs = wiki_search(topic)
 
-    api_key = os.getenv("OPENAI_API_KEY")
-
-    if KeyError:
-        api_key = st.sidebar.text_input(
-            "Enter OpenAI API Key", type="password"
-        )
-    if not api_key:
-        st.error("API Key is required to proceed.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
-        st.stop()
-    if len(api_key.strip()) <= 150:
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
-
-    else:
-        st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
-
 
 llm = ChatOpenAI(
     api_key=api_key,
@@ -189,7 +162,7 @@ Context: {context}
 )
 
 
-if not api_key:
+if not docs:
     st.markdown(
         """
     Welcome to QuizGPT.
@@ -200,6 +173,7 @@ if not api_key:
     """
     )
 else:
+
     response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
 
     if response and "questions" in response:
@@ -268,3 +242,33 @@ else:
                         )
                     else:
                         st.error(f"Wrong! Your answer: {user_answer}")
+
+
+with st.sidebar:
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.error("API Key is required to proceed.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
+
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
