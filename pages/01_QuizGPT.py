@@ -140,7 +140,7 @@ with st.sidebar:
             "Enter OpenAI API Key", type="password"
         )
     if not api_key:
-        st.warning("API Key is required to proceed.")
+        st.error("API Key is required to proceed.")
         st.markdown(
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
@@ -152,56 +152,41 @@ with st.sidebar:
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
-        st.stop()
+
     else:
         st.sidebar.success("API Key loaded successfully!")
         st.markdown(
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
-if api_key:
 
-    llm = ChatOpenAI(
-        api_key=api_key,
-        temperature=0.1,
-        model="gpt-3.5-turbo-0125",
-        streaming=True,
-        callbacks=[StreamingStdOutCallbackHandler()],
-    ).bind(
-        function_call={
-            "name": "get_questions",
-        },
-        functions=[function],
-    )
 
-    prompt = PromptTemplate.from_template(
-        """
-    You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
+llm = ChatOpenAI(
+    api_key=api_key,
+    temperature=0.1,
+    model="gpt-3.5-turbo-0125",
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
+).bind(
+    function_call={
+        "name": "get_questions",
+    },
+    functions=[function],
+)
 
-    You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
 
-    The difficulty level of the questions should be {difficulty}.
-
-    Context: {context}
-
+prompt = PromptTemplate.from_template(
     """
-    )
+You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
 
-else:
+You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
 
-    st.markdown(
-        """
-    Welcome to QuizGPT.
-                
-    I will make a quiz from Wikipedia articles or files you upload to test your knowledge and help you study.
-                
-    Get started by uploading a file or searching on Wikipedia in the sidebar.
+The difficulty level of the questions should be {difficulty}.
 
-    To create a quiz, you need an OpenAI API key. Please enter the API key and try again.
+Context: {context}
 
-
-    """
-    )
+"""
+)
 
 
 if not docs:
