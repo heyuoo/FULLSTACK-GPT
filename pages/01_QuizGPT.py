@@ -133,11 +133,6 @@ with st.sidebar:
         if topic:
             docs = wiki_search(topic)
 
-    st.markdown(
-        "[🚀View on"
-        "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-    )
-
     api_key = os.getenv("OPENAI_API_KEY")
 
     if KeyError:
@@ -145,14 +140,25 @@ with st.sidebar:
             "Enter OpenAI API Key", type="password"
         )
     if not api_key:
-        st.error("First, API Key is required to proceed.")
-
+        st.error("First of all, API Key is required to proceed.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
         st.stop()
     if len(api_key.strip()) <= 150:
         st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
 
     else:
         st.sidebar.success("API Key loaded successfully!")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+        )
 
 
 llm = ChatOpenAI(
@@ -184,7 +190,6 @@ Context: {context}
 
 
 if not docs:
-
     st.markdown(
         """
     Welcome to QuizGPT.
