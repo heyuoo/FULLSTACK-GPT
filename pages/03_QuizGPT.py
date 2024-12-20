@@ -1,4 +1,5 @@
 import json
+import os
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.chat_models import ChatOpenAI
@@ -7,6 +8,7 @@ from langchain.callbacks import StreamingStdOutCallbackHandler
 import streamlit as st
 from langchain.retrievers import WikipediaRetriever
 from langchain.schema import BaseOutputParser, output_parser
+from langchain.schema.runnable import RunnableMap
 
 
 st.set_page_config(
@@ -78,7 +80,7 @@ You are a professional quiz creator who designs questions in Korean to test stud
 
 You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
 
-
+The difficulty level of the questions should be {difficulty}.
 
 Context: {context}
 
@@ -107,9 +109,20 @@ def split_file(file):
 
 
 @st.cache_data(show_spinner="Making quiz...")
-def run_quiz_chain(_docs, topic):
-    chain = {"context": format_docs} | prompt | llm
-    response = chain.invoke(_docs)
+def run_quiz_chain(_docs, topic, difficulty):
+    context = format_docs(_docs)
+
+    chain = (
+        RunnableMap(
+            {
+                "context": lambda _: context,
+                "difficulty": lambda _: difficulty,
+            }
+        )
+        | prompt
+        | llm
+    )
+    response = chain.invoke({})
     arguments = json.loads(
         response.additional_kwargs["function_call"]["arguments"]
     )
@@ -125,8 +138,10 @@ def wiki_search(topic):
 with st.sidebar:
     docs = None
     topic = None
-    show_correct_answers = st.checkbox("Show Correct Answers", value=True)
 
+    difficulty = st.sidebar.selectbox(
+        "Choose difficulty level", ("Easy", "Medium", "Hard")
+    )
     choice = st.selectbox(
         "Choose what you want to use.",
         ("File", "Wikipedia Article"),
@@ -142,6 +157,35 @@ with st.sidebar:
         topic = st.text_input("Search Wikipedia...")
         if topic:
             docs = wiki_search(topic)
+    show_correct_answers = st.checkbox("Show Correct Answers", value=True)
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.warning("API Key is required to proceed.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+        )
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+        )
+        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/app.py)"
+        )
+
 
 if not docs:
     st.markdown(
@@ -154,11 +198,14 @@ if not docs:
     """
     )
 else:
-    response = run_quiz_chain(docs, topic if topic else file.name)
+    response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
 
     if response and "questions" in response:
+        score = 0
+        total_questions = len(response["questions"])
 
         with st.form("questions_form"):
+            user_answers = []
             for idx, question in enumerate(response["questions"], start=1):
                 st.write(f"Q {idx}. {question['question']}")
                 value = st.radio(
@@ -167,18 +214,55 @@ else:
                     index=None,
                     key=f"question_{idx}",
                 )
-                if {"answer": value, "correct": True} in question["answers"]:
-                    st.success("Correct!")
-                elif value is not None:
-                    if show_correct_answers:
-                        st.error("Wrong!")
-                        correct_answers = [
-                            answer["answer"]
-                            for answer in question["answers"]
-                            if answer["correct"]
-                        ]
-                        st.write("✔ Correct Answer : ", correct_answers[0])
-                    else:
-                        st.error("Wrong!")
+                user_answers.append((question, value))
                 st.divider()
-            button = st.form_submit_button()
+            submit_button = st.form_submit_button("Submit")
+
+        if submit_button:
+            for idx, (question, user_answer) in enumerate(
+                user_answers, start=1
+            ):
+
+                if {"answer": user_answer, "correct": True} in question[
+                    "answers"
+                ]:
+                    score += 1
+
+            st.write(f"### Your score: {score}/{total_questions}")
+
+            if score < total_questions:
+                st.warning(
+                    "You did not get a perfect score. Would you like to retry?"
+                )
+                retry_button = st.button("Retry")
+                if retry_button:
+                    for key in list(st.session_state.keys()):
+                        if key.startswith("question_"):
+                            del st.session_state[key]
+
+            else:
+                st.success("Perfect score! Well done!")
+                st.balloons()
+
+            for idx, (question, user_answer) in enumerate(
+                user_answers, start=1
+            ):
+                correct_answers = [
+                    answer["answer"]
+                    for answer in question["answers"]
+                    if answer["correct"]
+                ]
+
+                st.write(f"#### Q{idx}: {question['question']}")
+                if {"answer": user_answer, "correct": True} in question[
+                    "answers"
+                ]:
+                    st.success(f"Correct! Your answer: {user_answer}")
+                elif user_answer is not None:
+                    if show_correct_answers:
+                        st.error(
+                            f"Wrong! Your answer: {user_answer} | "
+                            f"✔ Correct Answer: {correct_answers[0]}"
+                        )
+                    else:
+                        st.error(f"Wrong! Your answer: {user_answer}")
