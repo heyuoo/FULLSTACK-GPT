@@ -61,34 +61,6 @@ function = {
 }
 
 
-llm = ChatOpenAI(
-    api_key=api_key,
-    temperature=0.1,
-    model="gpt-3.5-turbo-0125",
-    streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
-).bind(
-    function_call={
-        "name": "get_questions",
-    },
-    functions=[function],
-)
-
-
-prompt = PromptTemplate.from_template(
-    """
-You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
-
-You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
-
-The difficulty level of the questions should be {difficulty}.
-
-Context: {context}
-
-"""
-)
-
-
 def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
@@ -186,6 +158,34 @@ with st.sidebar:
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
         )
+
+
+llm = ChatOpenAI(
+    api_key=api_key,
+    temperature=0.1,
+    model="gpt-3.5-turbo-0125",
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
+).bind(
+    function_call={
+        "name": "get_questions",
+    },
+    functions=[function],
+)
+
+
+prompt = PromptTemplate.from_template(
+    """
+You are a professional quiz creator who designs questions in Korean to test students' knowledge based on the given context.
+
+You must create ten questions based on the information found in the provided context. Each question should have 4 options, with only one correct answer. All questions should be short and unique.
+
+The difficulty level of the questions should be {difficulty}.
+
+Context: {context}
+
+"""
+)
 
 
 if not docs:
