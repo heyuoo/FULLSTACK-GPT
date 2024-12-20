@@ -159,7 +159,7 @@ else:
             )
         if not api_key:
             st.error("API Key is required to proceed.")
-
+            st.stop()
         if len(api_key.strip()) <= 150:
             st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
 
