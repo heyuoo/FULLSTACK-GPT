@@ -112,6 +112,8 @@ with st.sidebar:
     docs = None
     topic = None
 
+    show_correct_answers = st.checkbox("Show Correct Answers", value=True)
+
     difficulty = st.sidebar.selectbox(
         "Choose difficulty level", ("Easy", "Medium", "Hard")
     )
@@ -130,7 +132,6 @@ with st.sidebar:
         topic = st.text_input("Search Wikipedia...")
         if topic:
             docs = wiki_search(topic)
-    show_correct_answers = st.checkbox("Show Correct Answers", value=True)
 
     api_key = os.getenv("OPENAI_API_KEY")
 
