@@ -140,7 +140,7 @@ with st.sidebar:
             "Enter OpenAI API Key", type="password"
         )
     if not api_key:
-        st.error("First of all, API Key is required to proceed.")
+        st.error("First, API Key is required to proceed.")
         st.markdown(
             "[🚀View on"
             "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
