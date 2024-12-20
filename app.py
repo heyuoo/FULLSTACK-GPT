@@ -14,9 +14,10 @@ st.markdown(
 Welcome to my FullstackGPT Portfolio!
             
 Here are the apps I made:
-            
+
+- [x] [QuizGPT](/QuizGPT)           
 - [x] [DocumentGPT](/DocumentGPT)
-- [x] [QuizGPT](/QuizGPT)
+
 
 """
 )
