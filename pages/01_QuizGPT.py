@@ -145,7 +145,7 @@ with st.sidebar:
             "Enter OpenAI API Key", type="password"
         )
     if not api_key:
-        st.error("API Key is required to proceed.")
+        st.error("First, API Key is required to proceed.")
 
         st.stop()
     if len(api_key.strip()) <= 150:
