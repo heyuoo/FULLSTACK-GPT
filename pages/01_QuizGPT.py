@@ -150,17 +150,9 @@ with st.sidebar:
         st.stop()
     if len(api_key.strip()) <= 150:
         st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
 
     else:
         st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
 
 
 llm = ChatOpenAI(
@@ -192,7 +184,7 @@ Context: {context}
 
 
 if not docs:
-    st.empty()
+
     st.markdown(
         """
     Welcome to QuizGPT.
@@ -203,7 +195,7 @@ if not docs:
     """
     )
 else:
-    st.empty()
+
     response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
 
     if response and "questions" in response:
