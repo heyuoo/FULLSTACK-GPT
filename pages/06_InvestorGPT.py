@@ -9,7 +9,46 @@ from pydantic import BaseModel, Field
 from langchain.agents import initialize_agent, AgentType
 from langchain.utilities import DuckDuckGoSearchAPIWrapper
 
-llm = ChatOpenAI(temperature=0.1, model_name="gpt-4o-mini")
+
+st.set_page_config(
+    page_title="InvestorGPT",
+    page_icon="💼",
+)
+
+st.markdown(
+    """
+    # InvestorGPT
+            
+    Welcome to InvestorGPT.
+            
+    Write down the name of a company and our Agent will do the research for you.
+"""
+)
+
+company = st.text_input("Write the name of the company you are interested on.")
+
+
+with st.sidebar:
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.error("First, API Key is required to proceed.")
+
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+
+        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+
+
+llm = ChatOpenAI(api_key=api_key, temperature=0.1, model_name="gpt-4o-mini")
 
 alpha_vantage_api_key = os.environ.get("ALPHA_VANTAGE_API_KEY")
 
@@ -125,22 +164,6 @@ agent = initialize_agent(
     },
 )
 
-st.set_page_config(
-    page_title="InvestorGPT",
-    page_icon="💼",
-)
-
-st.markdown(
-    """
-    # InvestorGPT
-            
-    Welcome to InvestorGPT.
-            
-    Write down the name of a company and our Agent will do the research for you.
-"""
-)
-
-company = st.text_input("Write the name of the company you are interested on.")
 
 if company:
     result = agent.invoke(company)

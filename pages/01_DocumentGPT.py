@@ -1,19 +1,31 @@
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.document_loaders import UnstructuredFileLoader
-from langchain.embeddings import CacheBackedEmbeddings, OpenAIEmbeddings
-from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
+from langchain_community.document_loaders import UnstructuredFileLoader
+from langchain.embeddings import CacheBackedEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain.schema.runnable import (
+    RunnableLambda,
+    RunnablePassthrough,
+)
 from langchain.storage import LocalFileStore
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores.faiss import FAISS
-from langchain.chat_models import ChatOpenAI
+from langchain_community.vectorstores import FAISS
+from langchain_community.chat_models import ChatOpenAI
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.memory import ConversationBufferMemory
 import streamlit as st
+import os
+
 
 st.set_page_config(
     page_title="DocumentGPT",
     page_icon="📃",
 )
+
+
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+if "history_message" not in st.session_state:
+    st.session_state["history_message"] = []
 
 
 class ChatCallbackHandler(BaseCallbackHandler):
@@ -30,9 +42,11 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-# Initialize ConversationBufferMemory
+api_key = None
+
 
 llm = ChatOpenAI(
+    api_key=api_key,
     temperature=0.1,
     streaming=True,
     callbacks=[
@@ -60,7 +74,7 @@ def embed_file(file):
     )
     loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(api_key=api_key)
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
         embeddings, cache_dir
     )
@@ -124,12 +138,29 @@ Upload your files on the sidebar.
 """
 )
 
+
 with st.sidebar:
     file = st.file_uploader(
         "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
     )
 
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.error("First, API Key is required to proceed.")
+
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+
+        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
 
 if file:
     retriever = embed_file(file)

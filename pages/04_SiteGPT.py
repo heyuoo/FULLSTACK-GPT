@@ -9,9 +9,31 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.memory import ConversationBufferMemory
 from langchain.schema import Document
 import streamlit as st
+import os
+
+
+st.set_page_config(
+    page_title="SiteGPT",
+    page_icon="🖥️",
+)
+
+
+st.markdown(
+    """
+    # SiteGPT
+            
+    Ask questions about the content of a website.
+            
+    Start by writing the URL of the website on the sidebar.
+"""
+)
+
+
+api_key = None
 
 
 llm = ChatOpenAI(
+    api_key=api_key,
     temperature=0.1,
 )
 
@@ -221,21 +243,8 @@ def load_website(url):
     return vector_store.as_retriever()
 
 
-st.set_page_config(
-    page_title="SiteGPT",
-    page_icon="🖥️",
-)
-
-
-st.markdown(
-    """
-    # SiteGPT
-            
-    Ask questions about the content of a website.
-            
-    Start by writing the URL of the website on the sidebar.
-"""
-)
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
 
 with st.sidebar:
@@ -243,6 +252,21 @@ with st.sidebar:
         "Write down a URL",
         placeholder="https://example.com",
     )
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.error("First, API Key is required to proceed.")
+
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+
+        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
 
 
 if url:
