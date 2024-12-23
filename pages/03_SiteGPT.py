@@ -29,12 +29,24 @@ st.markdown(
 )
 
 
-api_key = None
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
+
+if not api_key or len(api_key.strip()) <= 150:
+    st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+    st.stop()
+else:
+    st.sidebar.success("API Key loaded successfully!")
 
 
-llm = ChatOpenAI(
-    openai_api_key=api_key,
-    temperature=0.1,
+llm = (
+    ChatOpenAI(
+        openai_api_key=api_key,
+        temperature=0.1,
+    )
+    if api_key
+    else None
 )
 
 memory = ConversationBufferMemory(
@@ -262,32 +274,10 @@ with st.sidebar:
         placeholder="https://example.com",
     )
 
-    api_key = os.getenv("OPENAI_API_KEY")
-
-    if KeyError:
-        api_key = st.sidebar.text_input(
-            "Enter OpenAI API Key", type="password"
-        )
-    if not api_key:
-        st.warning("API Key is required to proceed.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
-        )
-        st.stop()
-    if len(api_key.strip()) <= 150:
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
-        )
-        st.stop()
-    else:
-        st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
-        )
+    st.markdown(
+        "[🚀View on"
+        "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
+    )
 
 
 if url:
