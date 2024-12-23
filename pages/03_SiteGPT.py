@@ -258,6 +258,10 @@ def load_website(url):
     )
     loader.requests_per_second = 2
     docs = loader.load_and_split(text_splitter=splitter)
+    return docs
+
+
+def get_retriever(docs):
     vector_store = FAISS.from_documents(
         docs, OpenAIEmbeddings(api_key=api_key)
     )
@@ -285,8 +289,9 @@ if url:
         with st.sidebar:
             st.error("Please write down a Sitemap URL.")
     else:
+        docs = load_website(url)
+        retriever = get_retriever(docs)
 
-        retriever = load_website(url)
         send_message("I'm ready! Ask away!", "ai", save=False)
         paint_history()
 
