@@ -28,6 +28,10 @@ st.markdown(
 """
 )
 
+st.sidebar.markdown(
+    "[🚀View on"
+    "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
+)
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
@@ -276,11 +280,6 @@ with st.sidebar:
     url = st.text_input(
         "Write down a URL",
         placeholder="https://example.com",
-    )
-
-    st.markdown(
-        "[🚀View on"
-        "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
     )
 
 
