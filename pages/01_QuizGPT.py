@@ -139,26 +139,10 @@ with st.sidebar:
         api_key = st.sidebar.text_input(
             "Enter OpenAI API Key", type="password"
         )
-    if not api_key:
-        st.error("First, API Key is required to proceed.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
-        st.stop()
-    if len(api_key.strip()) <= 150:
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
-
-    else:
-        st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
-        )
+    st.markdown(
+        "[🚀View on"
+        "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/01_QuizGPT.py)"
+    )
 
 
 llm = ChatOpenAI(
@@ -201,71 +185,83 @@ if not docs:
     )
 else:
 
-    response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
+    if not api_key:
+        st.error("First, API Key is required to proceed.")
+        st.stop()
+        if len(api_key.strip()) <= 150:
+            st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        else:
+            st.sidebar.success("API Key loaded successfully!")
 
-    if response and "questions" in response:
-        score = 0
-        total_questions = len(response["questions"])
+    else:
+        response = run_quiz_chain(
+            docs, topic if topic else file.name, difficulty
+        )
 
-        with st.form("questions_form"):
-            user_answers = []
-            for idx, question in enumerate(response["questions"], start=1):
-                st.write(f"Q {idx}. {question['question']}")
-                value = st.radio(
-                    "Select an option.",
-                    [answer["answer"] for answer in question["answers"]],
-                    index=None,
-                    key=f"question_{idx}",
-                )
-                user_answers.append((question, value))
-                st.divider()
-            submit_button = st.form_submit_button("Submit")
+        if response and "questions" in response:
+            score = 0
+            total_questions = len(response["questions"])
 
-        if submit_button:
-            for idx, (question, user_answer) in enumerate(
-                user_answers, start=1
-            ):
+            with st.form("questions_form"):
+                user_answers = []
+                for idx, question in enumerate(response["questions"], start=1):
+                    st.write(f"Q {idx}. {question['question']}")
+                    value = st.radio(
+                        "Select an option.",
+                        [answer["answer"] for answer in question["answers"]],
+                        index=None,
+                        key=f"question_{idx}",
+                    )
+                    user_answers.append((question, value))
+                    st.divider()
+                submit_button = st.form_submit_button("Submit")
 
-                if {"answer": user_answer, "correct": True} in question[
-                    "answers"
-                ]:
-                    score += 1
+            if submit_button:
+                for idx, (question, user_answer) in enumerate(
+                    user_answers, start=1
+                ):
 
-            st.write(f"### Your score: {score}/{total_questions}")
+                    if {"answer": user_answer, "correct": True} in question[
+                        "answers"
+                    ]:
+                        score += 1
 
-            if score < total_questions:
-                st.warning(
-                    "You did not get a perfect score. Would you like to retry?"
-                )
-                retry_button = st.button("Retry")
-                if retry_button:
-                    for key in list(st.session_state.keys()):
-                        if key.startswith("question_"):
-                            del st.session_state[key]
+                st.write(f"### Your score: {score}/{total_questions}")
 
-            else:
-                st.success("Perfect score! Well done!")
-                st.balloons()
+                if score < total_questions:
+                    st.warning(
+                        "You did not get a perfect score. Would you like to"
+                        " retry?"
+                    )
+                    retry_button = st.button("Retry")
+                    if retry_button:
+                        for key in list(st.session_state.keys()):
+                            if key.startswith("question_"):
+                                del st.session_state[key]
 
-            for idx, (question, user_answer) in enumerate(
-                user_answers, start=1
-            ):
-                correct_answers = [
-                    answer["answer"]
-                    for answer in question["answers"]
-                    if answer["correct"]
-                ]
+                else:
+                    st.success("Perfect score! Well done!")
+                    st.balloons()
 
-                st.write(f"#### Q{idx}: {question['question']}")
-                if {"answer": user_answer, "correct": True} in question[
-                    "answers"
-                ]:
-                    st.success(f"Correct! Your answer: {user_answer}")
-                elif user_answer is not None:
-                    if show_correct_answers:
-                        st.error(
-                            f"Wrong! Your answer: {user_answer} | "
-                            f"✔ Correct Answer: {correct_answers[0]}"
-                        )
-                    else:
-                        st.error(f"Wrong! Your answer: {user_answer}")
+                for idx, (question, user_answer) in enumerate(
+                    user_answers, start=1
+                ):
+                    correct_answers = [
+                        answer["answer"]
+                        for answer in question["answers"]
+                        if answer["correct"]
+                    ]
+
+                    st.write(f"#### Q{idx}: {question['question']}")
+                    if {"answer": user_answer, "correct": True} in question[
+                        "answers"
+                    ]:
+                        st.success(f"Correct! Your answer: {user_answer}")
+                    elif user_answer is not None:
+                        if show_correct_answers:
+                            st.error(
+                                f"Wrong! Your answer: {user_answer} | "
+                                f"✔ Correct Answer: {correct_answers[0]}"
+                            )
+                        else:
+                            st.error(f"Wrong! Your answer: {user_answer}")
