@@ -33,7 +33,7 @@ api_key = None
 
 
 llm = ChatOpenAI(
-    api_key=api_key,
+    openai_api_key=api_key,
     temperature=0.1,
 )
 
@@ -219,7 +219,9 @@ def find_history(query):
         for item in temp
     ]
     try:
-        vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+        vector_store = FAISS.from_documents(
+            docs, OpenAIEmbeddings(openai_api_key=api_key)
+        )
         found_docs = vector_store.similarity_search(query)
         candidate = found_docs[0].page_content.split("\n")[1]
         return candidate.replace("output:", "")
