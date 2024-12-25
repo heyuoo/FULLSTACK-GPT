@@ -1,0 +1,28 @@
+### XZ Backdoor Overview
+
+In February 2024, a malicious backdoor was introduced to the Linux build of the xz utility within the liblzma library in versions 5.6.0 and 5.6.1 by an account using the name "Jia Tan". The backdoor gives an attacker who possesses a specific Ed448 private key remote code execution capabilities on the affected Linux system. The issue has been given the Common Vulnerabilities and Exposures number CVE-2024-3094 and has been assigned a CVSS score of 10.0, the highest possible score.
+
+### Discovery and Impact
+
+The backdoor was discovered by software developer Andres Freund, who announced his findings on March 29, 2024. At the time of discovery, the backdoored version had not yet been widely deployed to production systems but was present in development versions of major distributions. The malicious code was found in the upstream tarballs of xz, starting with version 5.6.0. Through a series of complex obfuscations, the liblzma build process extracts a prebuilt object file from a disguised test file existing in the source code, which is then used to modify specific functions in the liblzma code.
+
+### CVE-2024-3094
+
+The CVE-2024-3094 vulnerability identifier was published on March 29, 2024, reflecting a critical 10.0 severity score in the liblzma package. The vulnerability is attributed to a software supply chain compromise impacting versions 5.6.0 and 5.6.1 of XZ Utils. The U.S. Cybersecurity and Infrastructure Security Agency (CISA) has recommended organizations downgrade to a previous non-compromised version of XZ Utils.
+
+### Significance
+
+CVE-2024-3094, also known as the XZ Backdoor software supply chain attack, is considered one of the most sophisticated social engineering attacks on open-source projects to date. An attacker or attackers masqueraded as maintainers of the popular open-source project XZ Utils, packaging malicious code in a software update.
+
+### Additional Information
+
+- **CVE Number**: CVE-2024-3094
+- **CVSS Score**: 10.0
+- **Affected Versions**: 5.6.0 and 5.6.1
+- **Discovered By**: Andres Freund
+- **Date of Discovery**: March 29, 2024
+- **Recommended Action**: Downgrade to a previous non-compromised version of XZ Utils.
+
+### References
+- Wikipedia: [XZ Utils backdoor](https://en.wikipedia.org/wiki/XZ_Utils_backdoor)
+- DuckDuckGo: Search results on XZ backdoor and CVE-2024-3094.
