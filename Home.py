@@ -21,5 +21,8 @@ Here are the apps I made:
 - [x] [SiteGPT](/SiteGPT)
 - [ ] [MeetingGPT](/MeetingGPT)
 - [x] [InvestorGPT](/InvestorGPT)
+- [x] [InvestorAssistantGPT](/InvestorAssistantGPT)
+- [x] [BookAssistantGPT](/BookAssistantGPT)
+
 """
 )
