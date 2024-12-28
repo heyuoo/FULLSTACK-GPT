@@ -1,87 +1,190 @@
-import streamlit as st
-from langchain.chat_models import ChatOpenAI
-from langchain.tools import BaseTool
-from langchain.agents import initialize_agent, AgentType
-from langchain.schema import SystemMessage
 from langchain.document_loaders import WebBaseLoader
 from langchain.tools import DuckDuckGoSearchResults, WikipediaQueryRun
 from langchain.utilities import WikipediaAPIWrapper
-from pydantic import BaseModel, Field
-from typing import Any, Type
-import os
+import json
+import time
+import streamlit as st
+import openai as client
 
 
-# Define custom tools
-class DuckDuckGoSearchToolArgsSchema(BaseModel):
-    query: str = Field(description="The query you will search for")
-
-
-class DuckDuckGoSearchTool(BaseTool):
-    name = "DuckDuckGoSearchTool"
-    description = (
-        "Perform web searches using DuckDuckGo. Input a query string."
-    )
-    args_schema: Type[DuckDuckGoSearchToolArgsSchema] = (
-        DuckDuckGoSearchToolArgsSchema
-    )
-
-    def _run(self, query) -> Any:
-        search = DuckDuckGoSearchResults()
+def duckduckgo_search(inputs):
+    if "query" not in inputs:
+        return "Error: Missing required parameter 'query'."
+    query = inputs["query"]
+    search = DuckDuckGoSearchResults()
+    try:
         return search.run(query)
+    except Exception as e:
+        return f"Error occurred during DuckDuckGo search: {str(e)}"
 
 
-wiki_api_wrapper = WikipediaAPIWrapper()
+def wikipedia_search(inputs):
+    query = inputs["query"]
+    wiki_api_wrapper = WikipediaAPIWrapper()
+    wiki = WikipediaQueryRun(api_wrapper=wiki_api_wrapper)
+    return wiki.run(query)
 
 
-class WikipediaSearchToolArgsSchema(BaseModel):
-    query: str = Field(
-        description="The query you will search for on Wikipedia"
-    )
-
-
-class WikipediaSearchTool(BaseTool):
-    name = "WikipediaSearchTool"
-    description = "Perform searches on Wikipedia. Input a query string."
-    args_schema: Type[WikipediaSearchToolArgsSchema] = (
-        WikipediaSearchToolArgsSchema
-    )
-
-    def _run(self, query) -> Any:
-        wiki = WikipediaQueryRun(api_wrapper=wiki_api_wrapper)
-        return wiki.run(query)
-
-
-class WebScrapingToolArgsSchema(BaseModel):
-    url: str = Field(description="The URL of the website you want to scrape")
-
-
-class WebScrapingTool(BaseTool):
-    name = "WebScrapingTool"
-    description = "Scrape content from a given URL."
-    args_schema: Type[WebScrapingToolArgsSchema] = WebScrapingToolArgsSchema
-
-    def _run(self, url):
+def web_scraping(inputs):
+    url = inputs.get("url", "")
+    if not url.startswith("http"):
+        return "Error: Invalid URL."
+    try:
         loader = WebBaseLoader([url])
         docs = loader.load()
         return "\n\n".join([doc.page_content for doc in docs])
+    except Exception as e:
+        return f"Error fetching content: {str(e)}"
 
 
-class SaveToTXTToolArgsSchema(BaseModel):
-    text: str = Field(description="The text you will save to a file.")
+def save_to_txt(inputs):
+    content = inputs["content"]
+    filename = inputs["filename"]
+    with open(filename, "w", encoding="utf-8") as file:
+        file.write(content)
+    return f"Research results saved to {filename}"
 
 
-class SaveToTXTTool(BaseTool):
-    name = "SaveToTXTTOOL"
-    description = """
-    Use this tool to save the content as a .txt file.
-    """
-    args_schema: Type[SaveToTXTToolArgsSchema] = SaveToTXTToolArgsSchema
+functions_map = {
+    "DuckDuckGoSearchTool": duckduckgo_search,
+    "WikipediaSearchTool": wikipedia_search,
+    "WebContentExtractorTool": web_scraping,
+    "save_to_file": save_to_txt,
+}
 
-    def _run(self, text) -> Any:
-        print(text)
-        with open("research_results.txt", "w") as file:
-            file.write(text)
-        return "Research results saved to research_results.txt"
+
+functions = [
+    {
+        "name": "DuckDuckGoSearchTool",
+        "description": "Searches DuckDuckGo for a given query.",
+        "parameters": {
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query for DuckDuckGo.",
+                }
+            },
+        },
+    },
+    {
+        "name": "WikipediaSearchTool",
+        "description": "Searches Wikipedia for a given query.",
+        "parameters": {
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query for Wikipedia.",
+                }
+            },
+        },
+    },
+    {
+        "name": "WebContentExtractorTool",
+        "parameters": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": (
+                        "URL of the website to extract content from."
+                    ),
+                }
+            },
+        },
+    },
+    {
+        "name": "save_to_file",
+        "description": "Saves content to a .txt file.",
+        "parameters": {
+            "type": "object",
+            "required": ["content", "filename"],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "Content to save to a file.",
+                },
+                "filename": {
+                    "type": "string",
+                    "description": "Filename to save the content to.",
+                },
+            },
+        },
+    },
+]
+
+
+def send_message(thread_id, content):
+    return client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=content,
+    )
+
+
+def get_run(run_id, thread_id):
+    return client.beta.threads.runs.retrieve(
+        run_id=run_id, thread_id=thread_id
+    )
+
+
+def get_messages(thread_id):
+    messages = client.beta.threads.messages.list(thread_id=thread_id)
+    messages = list(messages)
+    messages.reverse()
+    return messages
+
+
+def get_tool_outputs(run_id, thread_id):
+    run = client.beta.threads.runs.retrieve(run_id=run_id, thread_id=thread_id)
+    outputs = []
+    for action in run.required_action.submit_tool_outputs.tool_calls:
+        action_id = action.id
+        function = action.function
+        outputs.append(
+            {
+                "output": functions_map[function.name](
+                    json.loads(function.arguments)
+                ),
+                "tool_call_id": action_id,
+            }
+        )
+    return outputs
+
+
+def submit_tool_outputs(run_id, thread_id):
+    outputs = get_tool_outputs(run_id, thread_id)
+    return client.beta.threads.runs.submit_tool_outputs(
+        run_id=run_id,
+        thread_id=thread_id,
+        tool_outputs=outputs,
+    )
+
+
+def paint_message(message, role, save=True):
+    with st.chat_message(role):
+        st.markdown(message)
+    if save:
+        st.session_state["messages"].append({"message": message, "role": role})
+
+
+def paint_history():
+    for message in st.session_state["messages"]:
+        paint_message(
+            message["message"].replace("$", "\$"), message["role"], save=False
+        )
+
+
+def validate_run(run_id, thread_id):
+    try:
+        run = get_run(run_id, thread_id)
+        return run.status
+    except client.NotFoundError:
+        return None
 
 
 # Define Streamlit app
@@ -95,79 +198,98 @@ It searches Wikipedia, DuckDuckGo, and other sources to provide detailed insight
 """
 )
 
-# Initialize the agent
-llm = ChatOpenAI(temperature=0.1, model="gpt-4o-mini")
+assistant_id = "asst_Ff6rGIbsJiIsChAhacvYl5in"
 
-system_message = SystemMessage(
-    content="""
-        You are a research expert. Use Wikipedia or DuckDuckGo to gather information.
-        Scrape content from relevant links and provide comprehensive answers. Save findings to a .txt file.
-    """
-)
 
-agent = initialize_agent(
-    llm=llm,
-    agent=AgentType.OPENAI_FUNCTIONS,
-    tools=[
-        DuckDuckGoSearchTool(),
-        WikipediaSearchTool(),
-        WebScrapingTool(),
-    ],
-    verbose=True,
-    agent_kwargs={"system_message": system_message},
-)
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-# Interactive input
-if "conversation" not in st.session_state:
-    st.session_state["conversation"] = []
 
 query = st.chat_input("Enter your research keyword :")
 
 if query:
+    paint_history()
+    paint_message(query, "human")
 
-    result = agent.run(query)
-    st.session_state["conversation"].append(
-        {"query": query, "response": result}
+    if "thread" not in st.session_state:
+        thread = client.beta.threads.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"I want to know about {query}.",
+                }
+            ]
+        )
+        st.session_state["thread"] = thread
+    else:
+        thread = st.session_state["thread"]
+
+    if "run" in st.session_state:
+        current_status = validate_run(st.session_state["run"].id, thread.id)
+        if current_status in [None, "completed", "failed"]:
+            del st.session_state["run"]
+        else:
+            st.error("Previous analysis is still in progress. Please wait.")
+            st.stop()
+
+    run = client.beta.threads.runs.create(
+        thread_id=st.session_state["thread"].id,
+        assistant_id=assistant_id,
     )
+    st.session_state["run"] = run
+
+    with st.chat_message("ai"):
+        with st.spinner("Analyzing..."):
+            while get_run(run.id, thread.id).status in [
+                "queued",
+                "in_progress",
+                "requires_action",
+            ]:
+                if get_run(run.id, thread.id).status == "requires_action":
+                    get_tool_outputs(run.id, thread.id)
+                    submit_tool_outputs(run.id, thread.id)
+                    time.sleep(0.5)
+                else:
+                    time.sleep(0.5)
+
+            message = (
+                get_messages(thread.id)[-1]
+                .content[0]
+                .text.value.replace("$", "\$")
+            )
+            st.session_state["messages"].append(
+                {
+                    "message": message,
+                    "role": "ai",
+                }
+            )
+            st.markdown(message)
 
 
-# Display conversation
-if st.session_state["conversation"]:
-    st.divider()
-
-    for message in st.session_state["conversation"]:
-        st.chat_message("user").markdown(message["query"])
-        st.chat_message("assistant").markdown(message["response"])
-
-# Option to save results
-if st.session_state["conversation"]:
-    if st.button("Save Results to File"):
-        try:
-            downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
-            os.makedirs(downloads_dir, exist_ok=True)
-
-            # Define file path
-            def safe_filename(query):
-                # 파일 이름에 사용할 수 없는 문자 제거 및 길이 제한
-                invalid_chars = r'<>:"/\|?*'
-                for char in invalid_chars:
-                    query = query.replace(char, "")
-                return (
-                    query[:50] if len(query) > 50 else query
-                )  # 최대 50자 제한
-
-            # 파일 이름 설정
-            filename = f"{(st.session_state['conversation'][-1]['query'])}.txt"
-            save_path = os.path.join(downloads_dir, filename)
-
-            with open(save_path, "w", encoding="utf-8") as file:
-
-                file.write(
-                    f"Query: {message['query']}\nResponse:"
-                    f" {message['response']}\n\n"
-                )
-            st.success(f"Result saved successfully: {save_path}")
-        except Exception as e:
-            st.error(f"An error occurred while saving the file: {e}")
-else:
-    st.info("Perform research first. Enter your research keyword! ")
+#    result = agent.run(query)
+#    st.session_state["conversation"].append(
+#        {"query": query, "response": result}
+#    )
+#
+#
+## Display conversation
+# if st.session_state["conversation"]:
+#    st.divider()
+#
+#    for message in st.session_state["conversation"]:
+#        st.chat_message("user").markdown(message["query"])
+#        st.chat_message("assistant").markdown(message["response"])
+#
+## Option to save results
+# if st.session_state["conversation"]:
+#    if st.button("Save Results to File"):
+#        with open("research_results.txt", "w") as file:
+#            for message in st.session_state["conversation"]:
+#                file.write(
+#                    f"Query: {message['query']}\nResponse:"
+#                    f" {message['response']}\n\n"
+#                )
+#        st.success("Results saved to research_results.txt!")
+# else:
+#    st.info("Perform research first. Enter your research keyword! ")
+#
