@@ -1,195 +1,173 @@
 import streamlit as st
-from langchain.schema import SystemMessage, HumanMessage
 from langchain.chat_models import ChatOpenAI
 from langchain.tools import BaseTool
-from langchain.tools import WikipediaQueryRun, DuckDuckGoSearchRun
-from langchain.utilities import WikipediaAPIWrapper
-from langchain.document_loaders import WebBaseLoader
-from typing import Type
-from pydantic import BaseModel, Field
 from langchain.agents import initialize_agent, AgentType
+from langchain.schema import SystemMessage
+from langchain.document_loaders import WebBaseLoader
+from langchain.tools import DuckDuckGoSearchResults, WikipediaQueryRun
+from langchain.utilities import WikipediaAPIWrapper
+from pydantic import BaseModel, Field
+from typing import Any, Type
 import os
 
 
-class WikipediaSearchToolArgsSchema(BaseModel):
-    query: str = Field(description="Search query for Wikipedia.")
-
-
-class WikipediaSearchTool(BaseTool):
-    name: Type[str] = "WikipediaSearchTool"
-    description: Type[str] = "Searches Wikipedia for a given query."
-    args_schema: Type[WikipediaSearchToolArgsSchema] = (
-        WikipediaSearchToolArgsSchema
-    )
-
-    def _run(self, query):
-        wiki = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
-        return wiki.run(query)
-
-
+# Define custom tools
 class DuckDuckGoSearchToolArgsSchema(BaseModel):
-    query: str = Field(description="Search query for DuckDuckGo.")
+    query: str = Field(description="The query you will search for")
 
 
 class DuckDuckGoSearchTool(BaseTool):
-    name: Type[str] = "DuckDuckGoSearchTool"
-    description: Type[str] = "Searches DuckDuckGo for a given query."
+    name = "DuckDuckGoSearchTool"
+    description = (
+        "Perform web searches using DuckDuckGo. Input a query string."
+    )
     args_schema: Type[DuckDuckGoSearchToolArgsSchema] = (
         DuckDuckGoSearchToolArgsSchema
     )
 
-    def _run(self, query):
-        ddg = DuckDuckGoSearchRun()
-        return ddg.run(query)
+    def _run(self, query) -> Any:
+        search = DuckDuckGoSearchResults()
+        return search.run(query)
 
 
-class WebContentExtractorArgsSchema(BaseModel):
-    url: str = Field(description="URL of the website to extract content from.")
+wiki_api_wrapper = WikipediaAPIWrapper()
 
 
-class WebContentExtractorTool(BaseTool):
-    name: Type[str] = "WebContentExtractorTool"
-    description: Type[str] = "Extracts text content from a given website URL."
-    args_schema: Type[WebContentExtractorArgsSchema] = (
-        WebContentExtractorArgsSchema
+class WikipediaSearchToolArgsSchema(BaseModel):
+    query: str = Field(
+        description="The query you will search for on Wikipedia"
     )
 
+
+class WikipediaSearchTool(BaseTool):
+    name = "WikipediaSearchTool"
+    description = "Perform searches on Wikipedia. Input a query string."
+    args_schema: Type[WikipediaSearchToolArgsSchema] = (
+        WikipediaSearchToolArgsSchema
+    )
+
+    def _run(self, query) -> Any:
+        wiki = WikipediaQueryRun(api_wrapper=wiki_api_wrapper)
+        return wiki.run(query)
+
+
+class WebScrapingToolArgsSchema(BaseModel):
+    url: str = Field(description="The URL of the website you want to scrape")
+
+
+class WebScrapingTool(BaseTool):
+    name = "WebScrapingTool"
+    description = "Scrape content from a given URL."
+    args_schema: Type[WebScrapingToolArgsSchema] = WebScrapingToolArgsSchema
+
     def _run(self, url):
-        loader = WebBaseLoader(url)
-        documents = loader.load()
-        return "\n".join([doc.page_content for doc in documents])
+        loader = WebBaseLoader([url])
+        docs = loader.load()
+        return "\n\n".join([doc.page_content for doc in docs])
 
 
-class SaveToFileArgsSchema(BaseModel):
-    content: str = Field(description="Content to save to a file.")
-    filename: str = Field(description="Filename to save the content to.")
+class SaveToTXTToolArgsSchema(BaseModel):
+    text: str = Field(description="The text you will save to a file.")
 
 
-class SaveToFileTool(BaseTool):
-    name: Type[str] = "SaveToFileTool"
-    description: Type[str] = "Saves content to a .txt file."
-    args_schema: Type[SaveToFileArgsSchema] = SaveToFileArgsSchema
+class SaveToTXTTool(BaseTool):
+    name = "SaveToTXTTOOL"
+    description = """
+    Use this tool to save the content as a .txt file.
+    """
+    args_schema: Type[SaveToTXTToolArgsSchema] = SaveToTXTToolArgsSchema
 
-    def _run(self, content, filename="output.txt"):
-        target_dir = "output_files"
-        os.makedirs(target_dir, exist_ok=True)
-        save_path = os.path.join(target_dir, filename)
-        with open(save_path, "w", encoding="utf-8") as file:
-            file.write(content)
-        return f"Content saved to {save_path}"
+    def _run(self, text) -> Any:
+        print(text)
+        with open("research_results.txt", "w") as file:
+            file.write(text)
+        return "Research results saved to research_results.txt"
 
 
-# Streamlit Setup
-st.set_page_config(page_title="OpenAI Research Assistant", page_icon="🤖")
+# Define Streamlit app
+st.set_page_config(page_title="OpenAI Research Assistant", page_icon="📚")
 
 st.title("OpenAI Research Assistant")
 st.markdown(
     """
-This application uses OpenAI's assistant to gather information from various sources such as Wikipedia and DuckDuckGo, extract content from websites, and save it to files.
+Use this assistant to gather information on any topic. 
+It searches Wikipedia, DuckDuckGo, and other sources to provide detailed insights. Save findings to a .txt file.
 """
 )
-# API Key Input
-if "openai_api_key" not in st.session_state:
-    st.session_state.openai_api_key = ""
 
-st.session_state.openai_api_key = st.text_input(
-    "Enter your OpenAI API Key:", type="password", key="api_key"
+# Initialize the agent
+llm = ChatOpenAI(temperature=0.1, model="gpt-4o-mini")
+
+system_message = SystemMessage(
+    content="""
+        You are a research expert. Use Wikipedia or DuckDuckGo to gather information.
+        Scrape content from relevant links and provide comprehensive answers. Save findings to a .txt file.
+    """
 )
 
-if not st.session_state.openai_api_key:
-    st.warning("Please enter your OpenAI API Key to proceed.")
-    st.stop()
+agent = initialize_agent(
+    llm=llm,
+    agent=AgentType.OPENAI_FUNCTIONS,
+    tools=[
+        DuckDuckGoSearchTool(),
+        WikipediaSearchTool(),
+        WebScrapingTool(),
+    ],
+    verbose=True,
+    agent_kwargs={"system_message": system_message},
+)
 
-# Initialize Assistant
-if "assistant" not in st.session_state:
-    # Initialize OpenAI Chat Model
-    llm = ChatOpenAI(
-        openai_api_key=st.session_state.openai_api_key,
-        temperature=0.1,
-        model_name="gpt-4o-mini",
+# Interactive input
+if "conversation" not in st.session_state:
+    st.session_state["conversation"] = []
+
+query = st.chat_input("Enter your research keyword :")
+
+if query:
+
+    result = agent.run(query)
+    st.session_state["conversation"].append(
+        {"query": query, "response": result}
     )
 
-    # Define the assistant agent
-    st.session_state.assistant = initialize_agent(
-        llm=llm,
-        verbose=True,
-        agent=AgentType.OPENAI_FUNCTIONS,
-        tools=[
-            WikipediaSearchTool(),
-            DuckDuckGoSearchTool(),
-            WebContentExtractorTool(),
-            SaveToFileTool(),
-        ],
-        agent_kwargs={
-            "system_message": SystemMessage(
-                content="""You are an advanced OpenAI assistant. Your task is to gather information from various sources such as Wikipedia, DuckDuckGo, and websites. You can also save data into text files."""
-            )
-        },
-    )
-if "thread" not in st.session_state:
-    st.session_state.thread = []
 
-# User Input
-query = st.text_input("Enter your research query:")
+# Display conversation
+if st.session_state["conversation"]:
+    st.divider()
 
-if "assistant_response" not in st.session_state:
-    st.session_state.assistant_response = ""
+    for message in st.session_state["conversation"]:
+        st.chat_message("user").markdown(message["query"])
+        st.chat_message("assistant").markdown(message["response"])
 
-
-if st.button("Start Research"):
-    if query:
-        st.session_state.thread.append(HumanMessage(content=query))
-        with st.spinner("Researching..."):
-            try:
-                assistant_response = st.session_state.assistant.invoke(query)
-                if isinstance(assistant_response, dict):
-                    assistant_response_output = assistant_response.get(
-                        "output", ""
-                    )
-                else:
-                    assistant_response_output = str(assistant_response)
-
-                st.session_state.thread.append(
-                    SystemMessage(content=st.session_state.assistant_response)
-                )
-                st.session_state.assistant_response = assistant_response_output
-
-                st.success("Query processed successfully!")
-
-                st.text_area(
-                    "Assistant Response",
-                    st.session_state.assistant_response,
-                    height=300,
-                )
-
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-
-    else:
-        st.warning("Please enter a query before starting research.")
-
-        # Save result option
-
-if st.session_state.assistant_response:
-    if st.button("Save Result to File"):
+# Option to save results
+if st.session_state["conversation"]:
+    if st.button("Save Results to File"):
         try:
             downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
             os.makedirs(downloads_dir, exist_ok=True)
 
             # Define file path
-            filename = "research_result.txt"
+            def safe_filename(query):
+                # 파일 이름에 사용할 수 없는 문자 제거 및 길이 제한
+                invalid_chars = r'<>:"/\|?*'
+                for char in invalid_chars:
+                    query = query.replace(char, "")
+                return (
+                    query[:50] if len(query) > 50 else query
+                )  # 최대 50자 제한
+
+            # 파일 이름 설정
+            filename = f"{(st.session_state['conversation'][-1]['query'])}.txt"
             save_path = os.path.join(downloads_dir, filename)
 
-            # Save assistant response to file
             with open(save_path, "w", encoding="utf-8") as file:
-                file.write(st.session_state.assistant_response)
 
-            # Display success message with file path
+                file.write(
+                    f"Query: {message['query']}\nResponse:"
+                    f" {message['response']}\n\n"
+                )
             st.success(f"Result saved successfully: {save_path}")
-
-            # Optional: Provide a Streamlit download button
-
         except Exception as e:
             st.error(f"An error occurred while saving the file: {e}")
 else:
-    st.info("No response available to save. Perform research first.")
+    st.info("Perform research first. Enter your research keyword! ")
