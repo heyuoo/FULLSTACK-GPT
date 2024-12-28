@@ -210,45 +210,38 @@ st.markdown(
 assistant_id = "asst_7Hy1vJizAZ25onqlFeuyfDTB"
 
 
-company_name = st.chat_input(
-    "Enter the name of the company you want to research :"
-)
-
-
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
 
+company_name = st.chat_input(
+    "Enter the name of the company you want to research :"
+)
+
 if company_name:
+
+    if "thread" in st.session_state:
+        del st.session_state["thread"]
+    if "run" in st.session_state:
+        del st.session_state["run"]
+
     paint_history()
     paint_message(company_name, "human")
 
-    if "thread" not in st.session_state:
-        thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        f"I want to know if the {company_name} stock is a"
-                        " good buy"
-                    ),
-                }
-            ]
-        )
-        st.session_state["thread"] = thread
-    else:
-        thread = st.session_state["thread"]
-
-    if "run" in st.session_state:
-        current_status = validate_run(st.session_state["run"].id, thread.id)
-        if current_status in [None, "completed", "failed"]:
-            del st.session_state["run"]
-        else:
-            st.error("Previous analysis is still in progress. Please wait.")
-            st.stop()
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"I want to know if the {company_name} stock is a good buy"
+                ),
+            }
+        ]
+    )
+    st.session_state["thread"] = thread
 
     run = client.beta.threads.runs.create(
-        thread_id=st.session_state["thread"].id,
+        thread_id=thread.id,
         assistant_id=assistant_id,
     )
     st.session_state["run"] = run
@@ -261,7 +254,7 @@ if company_name:
                 "requires_action",
             ]:
                 if get_run(run.id, thread.id).status == "requires_action":
-                    get_tool_outputs(run.id, thread.id)
+
                     submit_tool_outputs(run.id, thread.id)
                     time.sleep(0.5)
                 else:

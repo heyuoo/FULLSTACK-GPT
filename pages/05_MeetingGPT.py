@@ -3,13 +3,13 @@ from langchain.tools import DuckDuckGoSearchResults, WikipediaQueryRun
 from langchain.utilities import WikipediaAPIWrapper
 import json
 import time
+import os
 import streamlit as st
 import openai as client
 
 
 def duckduckgo_search(inputs):
-    if "query" not in inputs:
-        return "Error: Missing required parameter 'query'."
+
     query = inputs["query"]
     search = DuckDuckGoSearchResults()
     try:
@@ -27,86 +27,103 @@ def wikipedia_search(inputs):
 
 def web_scraping(inputs):
     url = inputs.get("url", "")
-    if not url.startswith("http"):
-        return "Error: Invalid URL."
-    try:
-        loader = WebBaseLoader([url])
-        docs = loader.load()
-        return "\n\n".join([doc.page_content for doc in docs])
-    except Exception as e:
-        return f"Error fetching content: {str(e)}"
+    loader = WebBaseLoader([url])
+    docs = loader.load()
+    return "\n\n".join([doc.page_content for doc in docs])
 
 
 def save_to_txt(inputs):
-    content = inputs["content"]
-    filename = inputs["filename"]
-    with open(filename, "w", encoding="utf-8") as file:
+    content = inputs.get("content", None) or inputs.get("text")
+    query = inputs.get("query", "output")
+    filename = f"{query}.txt"
+    download_folder = f"./.cache/output/{filename}"
+    os.makedirs(download_folder, exist_ok=True)
+    file_path = os.path.join(download_folder, filename)
+    with open(file_path, "w", encoding="utf-8") as file:
         file.write(content)
-    return f"Research results saved to {filename}"
+    return {
+        "message": f"Research results saved to {filename}",
+        "content": content,
+        "filename": filename,
+    }
 
 
 functions_map = {
     "DuckDuckGoSearchTool": duckduckgo_search,
     "WikipediaSearchTool": wikipedia_search,
-    "WebContentExtractorTool": web_scraping,
-    "save_to_file": save_to_txt,
+    "WebScrapingTool": web_scraping,
+    "SaveToTXTTOOL": save_to_txt,
 }
 
 
 functions = [
     {
         "name": "DuckDuckGoSearchTool",
-        "description": "Searches DuckDuckGo for a given query.",
+        "description": """
+    Use this tool to perform web searches using the DuckDuckGo search engine.
+    It takes a query as an argument.
+    Example query: "Latest technology news"
+    """,
         "parameters": {
             "type": "object",
             "required": ["query"],
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Search query for DuckDuckGo.",
+                    "description": "The query you will search for string.",
                 }
             },
         },
     },
     {
         "name": "WikipediaSearchTool",
-        "description": "Searches Wikipedia for a given query.",
+        "description": """
+    Use this tool to perform searches on Wikipedia.
+    It takes a query as an argument.
+    Example query: "Artificial Intelligence"
+    """,
         "parameters": {
             "type": "object",
             "required": ["query"],
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Search query for Wikipedia.",
-                }
-            },
-        },
-    },
-    {
-        "name": "WebContentExtractorTool",
-        "parameters": {
-            "type": "object",
-            "required": ["url"],
-            "properties": {
-                "url": {
-                    "type": "string",
                     "description": (
-                        "URL of the website to extract content from."
+                        "The query you will search for on Wikipedia"
                     ),
                 }
             },
         },
     },
     {
-        "name": "save_to_file",
-        "description": "Saves content to a .txt file.",
+        "name": "WebScrapingTool",
+        "description": """
+    If you found the website link in DuckDuckGo,
+    Use this to get the content of the link for my research.
+    """,
+        "parameters": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the website you want to scrape",
+                }
+            },
+        },
+    },
+    {
+        "name": "SaveToTXTTOOL",
+        "description": """
+    Use this tool to save the content as a .txt file.
+    """,
         "parameters": {
             "type": "object",
             "required": ["content", "filename"],
             "properties": {
                 "content": {
                     "type": "string",
-                    "description": "Content to save to a file.",
+                    "description": "The text you will save to a file.",
                 },
                 "filename": {
                     "type": "string",
@@ -116,14 +133,6 @@ functions = [
         },
     },
 ]
-
-
-def send_message(thread_id, content):
-    return client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=content,
-    )
 
 
 def get_run(run_id, thread_id):
@@ -145,14 +154,17 @@ def get_tool_outputs(run_id, thread_id):
     for action in run.required_action.submit_tool_outputs.tool_calls:
         action_id = action.id
         function = action.function
+        result = functions_map[function.name](json.loads(function.arguments))
+
+        if isinstance(result, dict) or isinstance(result, list):
+            result = json.dumps(result)
         outputs.append(
             {
-                "output": functions_map[function.name](
-                    json.loads(function.arguments)
-                ),
+                "output": result,
                 "tool_call_id": action_id,
             }
         )
+
     return outputs
 
 
@@ -179,15 +191,6 @@ def paint_history():
         )
 
 
-def validate_run(run_id, thread_id):
-    try:
-        run = get_run(run_id, thread_id)
-        return run.status
-    except client.NotFoundError:
-        return None
-
-
-# Define Streamlit app
 st.set_page_config(page_title="OpenAI Research Assistant", page_icon="📚")
 
 st.title("OpenAI Research Assistant")
@@ -198,8 +201,37 @@ It searches Wikipedia, DuckDuckGo, and other sources to provide detailed insight
 """
 )
 
-assistant_id = "asst_Ff6rGIbsJiIsChAhacvYl5in"
 
+assistants = client.beta.assistants.list(limit=10)
+for a in assistants:
+    if a.name == "Search Assistant":
+        assistant = client.beta.assistants.retrieve(a.id)
+        break
+else:
+    assistant = client.beta.assistants.create(
+        name="Search Assistant",
+        model="gpt-4o-mini",
+        tools=functions,
+        agent_kwargs={
+            "system_message": """
+        You are a research expert.
+
+        Your task is to use Wikipedia or DuckDuckGo to gather comprehensive and accurate information about the query provided. 
+
+        When you find a relevant website through DuckDuckGo, you must scrape the content from that website. Use this scraped content to thoroughly research and formulate a detailed answer to the question. 
+
+        Combine information from Wikipedia, DuckDuckGo searches, and any relevant websites you find. Ensure that the final answer is well-organized and detailed, and include citations with links (URLs) for all sources used.
+
+        Your research should be saved to a .txt file, and the content should match the detailed findings provided. Make sure to include all sources and relevant information.
+
+        The information from Wikipedia must be included.
+
+        Ensure that the final .txt file contains detailed information, all relevant sources, and citations.
+        
+        Please display the final content in the AI response.
+        """
+        },
+    )
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
@@ -208,33 +240,27 @@ if "messages" not in st.session_state:
 query = st.chat_input("Enter your research keyword :")
 
 if query:
+    if "thread" in st.session_state:
+        del st.session_state["thread"]
+    if "run" in st.session_state:
+        del st.session_state["run"]
+
     paint_history()
     paint_message(query, "human")
 
-    if "thread" not in st.session_state:
-        thread = client.beta.threads.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"I want to know about {query}.",
-                }
-            ]
-        )
-        st.session_state["thread"] = thread
-    else:
-        thread = st.session_state["thread"]
-
-    if "run" in st.session_state:
-        current_status = validate_run(st.session_state["run"].id, thread.id)
-        if current_status in [None, "completed", "failed"]:
-            del st.session_state["run"]
-        else:
-            st.error("Previous analysis is still in progress. Please wait.")
-            st.stop()
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": f"I want to know about {query}.",
+            }
+        ]
+    )
+    st.session_state["thread"] = thread
 
     run = client.beta.threads.runs.create(
-        thread_id=st.session_state["thread"].id,
-        assistant_id=assistant_id,
+        thread_id=thread.id,
+        assistant_id=assistant.id,
     )
     st.session_state["run"] = run
 
@@ -257,6 +283,7 @@ if query:
                 .content[0]
                 .text.value.replace("$", "\$")
             )
+
             st.session_state["messages"].append(
                 {
                     "message": message,
@@ -264,32 +291,3 @@ if query:
                 }
             )
             st.markdown(message)
-
-
-#    result = agent.run(query)
-#    st.session_state["conversation"].append(
-#        {"query": query, "response": result}
-#    )
-#
-#
-## Display conversation
-# if st.session_state["conversation"]:
-#    st.divider()
-#
-#    for message in st.session_state["conversation"]:
-#        st.chat_message("user").markdown(message["query"])
-#        st.chat_message("assistant").markdown(message["response"])
-#
-## Option to save results
-# if st.session_state["conversation"]:
-#    if st.button("Save Results to File"):
-#        with open("research_results.txt", "w") as file:
-#            for message in st.session_state["conversation"]:
-#                file.write(
-#                    f"Query: {message['query']}\nResponse:"
-#                    f" {message['response']}\n\n"
-#                )
-#        st.success("Results saved to research_results.txt!")
-# else:
-#    st.info("Perform research first. Enter your research keyword! ")
-#
