@@ -37,16 +37,18 @@ def save_to_txt(inputs):
     content = inputs.get("text")
 
     filename = "research_results.txt"
-
     counter = 1
     while os.path.exists(filename):
         filename = f"research_results_{counter}.txt"
-
         counter += 1
-
     with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
-
+    st.download_button(
+        label="Download the research results",
+        data=content,
+        file_name=filename,
+        mime="text/plain",
+    )
     return {
         "message": f"Research results saved to {filename}",
         "content": content,
