@@ -267,7 +267,7 @@ else:
 
         Ensure that the final .txt file contains detailed information, all relevant sources, and citations.
         
-        Please display the final content in the AI response.
+        Please display the final content in the AI response .
         """
         },
     )
