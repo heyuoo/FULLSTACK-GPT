@@ -275,8 +275,11 @@ if query:
     if "run" in st.session_state:
         del st.session_state["run"]
 
-    paint_history()
     paint_message(query, "human")
+
+    result = save_to_txt({"text": f"Research about {query}"})
+
+    paint_history()
 
     thread = client.beta.threads.create(
         messages=[
