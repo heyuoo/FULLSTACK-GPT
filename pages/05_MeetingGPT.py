@@ -33,16 +33,24 @@ def web_scraping(inputs):
 
 
 def save_to_txt(inputs):
-    content = inputs.get("content", None) or inputs.get("text")
-    query = inputs.get("query", "output")
-    filename = f"{query}.txt"
-    download_folder = f"./.cache/output/{filename}"
+    content = inputs.get("text")
+    download_folder = "./.cache/output"
     os.makedirs(download_folder, exist_ok=True)
+
+    filename = "research_results.txt"
     file_path = os.path.join(download_folder, filename)
+
+    counter = 1
+    while os.path.exists(file_path):
+        filename = f"research_results_{counter}.txt"
+        file_path = os.path.join(download_folder, filename)
+        counter += 1
+
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(content)
+
     return {
-        "message": f"Research results saved to {filename}",
+        "message": f"Research results saved to {file_path}",
         "content": content,
         "filename": filename,
     }
@@ -272,7 +280,7 @@ if query:
                 "requires_action",
             ]:
                 if get_run(run.id, thread.id).status == "requires_action":
-                    get_tool_outputs(run.id, thread.id)
+
                     submit_tool_outputs(run.id, thread.id)
                     time.sleep(0.5)
                 else:
