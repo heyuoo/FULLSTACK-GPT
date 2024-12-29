@@ -327,15 +327,3 @@ if query:
                 }
             )
             st.markdown(message)
-
-            filename = "research_results.txt"
-            with open(filename, "w", encoding="utf-8") as file:
-                file.write(message)
-
-            st.download_button(
-                label="Download the research results",
-                data=message,
-                file_name=filename,
-                mime="text/plain",
-                key="download_button",
-            )
