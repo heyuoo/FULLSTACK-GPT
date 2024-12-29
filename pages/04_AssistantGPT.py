@@ -8,9 +8,6 @@ import streamlit as st
 import openai as client
 
 
-api_key = None
-
-
 def duckduckgo_search(inputs):
 
     query = inputs["query"]
@@ -213,35 +210,23 @@ It searches Wikipedia, DuckDuckGo, and other sources to provide detailed insight
 )
 
 
-with st.sidebar:
+st.sidebar.markdown(
+    "[🚀View on"
+    "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/04_AssistantGPT.py)"
+)
 
-    api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
 
-    if KeyError:
-        api_key = st.sidebar.text_input(
-            "Enter OpenAI API Key", type="password"
-        )
-    if not api_key:
-        st.warning("API Key is required to proceed.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/04_AssistantGPT.py)"
-        )
-        st.stop()
-    if len(api_key.strip()) <= 150:
-        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/04_AssistantGPT.py)"
-        )
-        st.stop()
-    else:
-        st.sidebar.success("API Key loaded successfully!")
-        st.markdown(
-            "[🚀View on"
-            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/04_AssistantGPT.py)"
-        )
+if not api_key or len(api_key.strip()) <= 150:
+    st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+    st.stop()
+else:
+    st.sidebar.success("API Key loaded successfully!")
 
+
+client.api_key = api_key
 
 assistants = client.beta.assistants.list(limit=10)
 for a in assistants:
@@ -252,9 +237,8 @@ else:
     assistant = client.beta.assistants.create(
         name="Search Assistant",
         model="gpt-4o-mini",
-        api_key=api_key,
         tools=functions,
-        agent_kwargs={
+        instructions={
             "system_message": """
         You are a research expert.
 
