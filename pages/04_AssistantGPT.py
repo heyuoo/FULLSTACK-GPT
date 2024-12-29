@@ -227,7 +227,10 @@ if not api_key:
     api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
 
 if not api_key or len(api_key.strip()) <= 150:
-    st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+    st.error(
+        "OpenAI API Key is required to proceed.. Please enter a valid OpenAI"
+        " API Key."
+    )
     st.stop()
 else:
     st.sidebar.success("API Key loaded successfully!")
