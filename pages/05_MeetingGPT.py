@@ -210,6 +210,36 @@ It searches Wikipedia, DuckDuckGo, and other sources to provide detailed insight
 )
 
 
+with st.sidebar:
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if KeyError:
+        api_key = st.sidebar.text_input(
+            "Enter OpenAI API Key", type="password"
+        )
+    if not api_key:
+        st.warning("API Key is required to proceed.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
+        )
+        st.stop()
+    if len(api_key.strip()) <= 150:
+        st.error("Invalid API Key. Please enter a valid OpenAI API Key.")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
+        )
+        st.stop()
+    else:
+        st.sidebar.success("API Key loaded successfully!")
+        st.markdown(
+            "[🚀View on"
+            "Code](https://github.com/heyuoo/FULLSTACK-GPT/blob/streamlit5/pages/03_SiteGPT.py)"
+        )
+
+
 assistants = client.beta.assistants.list(limit=10)
 for a in assistants:
     if a.name == "Search Assistant":
@@ -219,6 +249,7 @@ else:
     assistant = client.beta.assistants.create(
         name="Search Assistant",
         model="gpt-4o-mini",
+        api_key=api_key,
         tools=functions,
         agent_kwargs={
             "system_message": """
