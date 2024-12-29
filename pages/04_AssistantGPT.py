@@ -37,7 +37,6 @@ def save_to_txt(inputs):
     content = inputs.get("text")
     filename = "research_results.txt"
 
-    # 파일 저장
     with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
 
@@ -46,19 +45,15 @@ def save_to_txt(inputs):
         data=content,
         file_name=filename,
         mime="text/plain",
-        key="download_button",  # 버튼 키를 지정하여 새로고침 방지
+        key="download_button",
     )
 
-    # 상태 유지
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
 
-    # 메시지 추가
     st.session_state["messages"].append(
         {"message": f"Research results saved to {filename}", "role": "ai"}
     )
-
-    # 다운로드 버튼
 
     return {
         "message": f"Research results saved to {filename}",
@@ -285,7 +280,7 @@ if query:
         del st.session_state["run"]
 
     st.session_state["messages"].append({"message": query, "role": "human"})
-    paint_history()  # 최신 대화 기록 출력
+    paint_history()
 
     #
 
@@ -332,3 +327,15 @@ if query:
                 }
             )
             st.markdown(message)
+
+            filename = "research_results.txt"
+            with open(filename, "w", encoding="utf-8") as file:
+                file.write(message)
+
+            st.download_button(
+                label="Download the research results",
+                data=message,
+                file_name=filename,
+                mime="text/plain",
+                key="download_button",
+            )
