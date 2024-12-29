@@ -1,6 +1,7 @@
 from langchain.document_loaders import WebBaseLoader
 from langchain.tools import DuckDuckGoSearchResults, WikipediaQueryRun
 from langchain.utilities import WikipediaAPIWrapper
+from pathlib import Path
 import json
 import time
 import os
@@ -34,7 +35,7 @@ def web_scraping(inputs):
 
 def save_to_txt(inputs):
     content = inputs.get("text")
-    download_folder = "./.cache/output"
+    download_folder = str(Path.home() / "Downloads")
     os.makedirs(download_folder, exist_ok=True)
 
     filename = "research_results.txt"
