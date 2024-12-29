@@ -35,24 +35,30 @@ def web_scraping(inputs):
 
 def save_to_txt(inputs):
     content = inputs.get("text")
-
     filename = "research_results.txt"
 
+    # 파일 저장
     with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
+
+    # 상태 유지
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
 
+    # 메시지 추가
     st.session_state["messages"].append(
         {"message": f"Research results saved to {filename}", "role": "ai"}
     )
 
+    # 다운로드 버튼
     st.download_button(
         label="Download the research results",
         data=content,
         file_name=filename,
         mime="text/plain",
+        key="download_button",  # 버튼 키를 지정하여 새로고침 방지
     )
+
     return {
         "message": f"Research results saved to {filename}",
         "content": content,
