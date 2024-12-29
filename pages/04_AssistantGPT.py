@@ -285,9 +285,12 @@ if query:
         del st.session_state["run"]
 
     st.session_state["messages"].append({"message": query, "role": "human"})
-    # 최신 대화 기록 출력
+    paint_history()  # 최신 대화 기록 출력
 
     # AI 응답 생성
+    response = f"I am researching {query}..."
+    st.session_state["messages"].append({"message": response, "role": "ai"})
+    paint_history()
 
     thread = client.beta.threads.create(
         messages=[
