@@ -285,7 +285,7 @@ if query:
         del st.session_state["run"]
 
     st.session_state["messages"].append({"message": query, "role": "human"})
-    paint_history()  # 최신 대화 기록 출력
+    # 최신 대화 기록 출력
 
     # AI 응답 생성
 
