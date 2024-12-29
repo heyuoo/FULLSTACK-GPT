@@ -35,26 +35,20 @@ def web_scraping(inputs):
 
 def save_to_txt(inputs):
     content = inputs.get("text")
-    download_folder = str(Path.home() / "Downloads")
-    os.makedirs(download_folder, exist_ok=True)
 
     filename = "research_results.txt"
-    file_path = os.path.join(download_folder, filename)
 
     counter = 1
-    while os.path.exists(file_path):
+    while os.path.exists(filename):
         filename = f"research_results_{counter}.txt"
-        file_path = os.path.join(download_folder, filename)
+
         counter += 1
 
-    with open(file_path, "w", encoding="utf-8") as file:
+    with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
-    st.markdown(
-        f"Your file is ready for download: [Download file](file://{file_path})"
-    )
 
     return {
-        "message": f"Research results saved to {file_path}",
+        "message": f"Research results saved to {filename}",
         "content": content,
         "filename": filename,
     }
