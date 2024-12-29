@@ -50,6 +50,14 @@ def save_to_txt(inputs):
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(content)
 
+    with open(file_path, "r") as file:
+        st.download_button(
+            label="Download Research Results",
+            data=file,
+            file_name=filename,
+            mime="text/plain",
+        )
+
     return {
         "message": f"Research results saved to {file_path}",
         "content": content,
