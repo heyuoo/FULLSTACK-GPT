@@ -41,6 +41,14 @@ def save_to_txt(inputs):
     with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
 
+    st.download_button(
+        label="Download the research results",
+        data=content,
+        file_name=filename,
+        mime="text/plain",
+        key="download_button",  # 버튼 키를 지정하여 새로고침 방지
+    )
+
     # 상태 유지
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
@@ -51,13 +59,6 @@ def save_to_txt(inputs):
     )
 
     # 다운로드 버튼
-    st.download_button(
-        label="Download the research results",
-        data=content,
-        file_name=filename,
-        mime="text/plain",
-        key="download_button",  # 버튼 키를 지정하여 새로고침 방지
-    )
 
     return {
         "message": f"Research results saved to {filename}",
@@ -203,10 +204,11 @@ def paint_message(message, role, save=True):
 
 
 def paint_history():
-    for message in st.session_state["messages"]:
-        paint_message(
-            message["message"].replace("$", "\$"), message["role"], save=False
-        )
+    if "messages" in st.session_state:
+        for message in st.session_state["messages"]:
+            role = message["role"]
+            content = message["message"]
+            st.chat_message(role).markdown(content)
 
 
 st.set_page_config(page_title="OpenAI Research Assistant", page_icon="📚")
@@ -272,6 +274,7 @@ else:
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
+paint_history()
 
 query = st.chat_input("Enter your research keyword :")
 
@@ -281,8 +284,13 @@ if query:
     if "run" in st.session_state:
         del st.session_state["run"]
 
+    st.session_state["messages"].append({"message": query, "role": "human"})
+    paint_history()  # 최신 대화 기록 출력
+
+    # AI 응답 생성
+    response = f"I am researching {query}..."
+    st.session_state["messages"].append({"message": response, "role": "ai"})
     paint_history()
-    paint_message(query, "human")
 
     thread = client.beta.threads.create(
         messages=[
