@@ -37,12 +37,16 @@ def save_to_txt(inputs):
     content = inputs.get("text")
 
     filename = "research_results.txt"
-    counter = 1
-    while os.path.exists(filename):
-        filename = f"research_results_{counter}.txt"
-        counter += 1
+
     with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
+
+    st.session_state["messages"].append(
+        {"message": f"Research results saved to {filename}", "role": "ai"}
+    )
+
     st.download_button(
         label="Download the research results",
         data=content,
