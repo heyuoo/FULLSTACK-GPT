@@ -8,6 +8,9 @@ import streamlit as st
 import openai as client
 
 
+api_key = None
+
+
 def duckduckgo_search(inputs):
 
     query = inputs["query"]
