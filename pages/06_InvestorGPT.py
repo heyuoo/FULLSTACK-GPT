@@ -12,7 +12,7 @@ from langchain.utilities import DuckDuckGoSearchAPIWrapper
 
 st.set_page_config(
     page_title="InvestorGPT",
-    page_icon="💼",
+    page_icon="📈",
 )
 
 st.markdown(
