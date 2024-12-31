@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import StrOutputParser
-
+from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
 from langchain.vectorstores.faiss import FAISS
 from langchain.embeddings import CacheBackedEmbeddings, OpenAIEmbeddings
 
@@ -116,6 +116,11 @@ Get started by uploading a video file in the sidebar.
 """
 )
 
+
+def format_docs(docs):
+    return "\n\n".join(document.page_content for document in docs)
+
+
 with st.sidebar:
     video = st.file_uploader(
         "Video",
@@ -200,8 +205,31 @@ if video:
 
     with qa_tab:
         retriever = embed_file(transcript_path)
-        question = st.text_input("Ask a question about the transcript:")
-        if question:
-            results = retriever.get_relevant_documents(question)
-            for result in results:
-                st.write(result.page_content)
+        question = st.text_input("Ask a question about the video:")
+        docs = retriever.invoke(question)
+        answer_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+            Your job is to answer the user's question using the given context.
+            The context is a transcript from a video.
+            Answer the question using ONLY the following context. If you don't know the answer just say you don't know. DON'T make anything up.
+            
+            Context: {context}
+            """,
+                ),
+                ("human", "{question}"),
+            ]
+        )
+        answer_chain = (
+            {
+                "context": retriever | RunnableLambda(format_docs),
+                "question": RunnablePassthrough(),
+            }
+            | answer_prompt
+            | llm
+            | StrOutputParser()
+        )
+        answer = answer_chain.invoke(question)
+        st.write(answer)
