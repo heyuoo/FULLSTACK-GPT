@@ -1,3 +1,4 @@
+from langchain.storage import LocalFileStore
 import streamlit as st
 import subprocess
 import math
@@ -11,12 +12,42 @@ from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import StrOutputParser
 
+from langchain.vectorstores.faiss import FAISS
+from langchain.embeddings import CacheBackedEmbeddings, OpenAIEmbeddings
+
+
 llm = ChatOpenAI(
     temperature=0.1,
     model="gpt-4o-mini",
 )
 
 has_transcript = os.path.exists("./.cache/podcast.txt")
+
+
+splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+    chunk_size=1000,
+    chunk_overlap=200,
+)
+
+
+@st.cache_resource()
+def embed_file(file_path):
+    cache_dir = LocalFileStore(
+        f"./.cache/embeddings/{os.path.basename(file_path)}"
+    )
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=1000,
+        chunk_overlap=200,
+    )
+    loader = TextLoader(file_path, encoding="utf-8")
+    docs = loader.load_and_split(text_splitter=splitter)
+    embeddings = OpenAIEmbeddings()
+    cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
+        embeddings, cache_dir
+    )
+    vectorstore = FAISS.from_documents(docs, cached_embeddings)
+    retriever = vectorstore.as_retriever()
+    return retriever
 
 
 @st.cache_data()
@@ -125,10 +156,7 @@ if video:
         if start:
 
             loader = TextLoader(transcript_path, encoding="utf-8")
-            splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                chunk_size=1000,
-                chunk_overlap=200,
-            )
+
             docs = loader.load_and_split(text_splitter=splitter)
             first_summary_prompt = ChatPromptTemplate.from_template(
                 """
@@ -169,3 +197,11 @@ if video:
                     )
                     st.write(summary)
             st.write(summary)
+
+    with qa_tab:
+        retriever = embed_file(transcript_path)
+        question = st.text_input("Ask a question about the transcript:")
+        if question:
+            results = retriever.get_relevant_documents(question)
+            for result in results:
+                st.write(result.page_content)
