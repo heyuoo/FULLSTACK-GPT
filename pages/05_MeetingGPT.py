@@ -5,6 +5,16 @@ from pydub import AudioSegment
 import glob
 import openai
 import os
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+from langchain.document_loaders import TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.schema import StrOutputParser
+
+llm = ChatOpenAI(
+    temperature=0.1,
+    model="gpt-4o-mini",
+)
 
 has_transcript = os.path.exists("./.cache/podcast.txt")
 
@@ -106,5 +116,56 @@ if video:
     )
 
     with transcript_tab:
-        with open(transcript_path, "r") as file:
+        with open(transcript_path, "r", encoding="utf-8") as file:
             st.write(file.read())
+
+    with summary_tab:
+        start = st.button("Generate summary")
+
+        if start:
+
+            loader = TextLoader(transcript_path, encoding="utf-8")
+            splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                chunk_size=1000,
+                chunk_overlap=200,
+            )
+            docs = loader.load_and_split(text_splitter=splitter)
+            first_summary_prompt = ChatPromptTemplate.from_template(
+                """
+                다음 내용을 간결하게 요약하세요:
+                     "{text}"
+                간결한 요약:                
+            """
+            )
+            first_summary_chain = (
+                first_summary_prompt | llm | StrOutputParser()
+            )
+            summary = first_summary_chain.invoke(
+                {"text": docs[0].page_content},
+            )
+            refine_prompt = ChatPromptTemplate.from_template(
+                """
+                당신의 작업은 최종 요약을 작성하는 것입니다.
+    우리는 특정 지점까지 작성된 기존 요약을 제공했습니다: {existing_summary}
+    아래의 추가 내용을 사용하여 기존 요약을 (필요한 경우에만) 보완하세요.
+    ------------
+    {context}
+    ------------
+    새로운 내용을 고려하여 기존 요약을 보완하세요.
+    만약 추가 내용이 유용하지 않다면, 기존 요약을 반환하세요.
+                """
+            )
+            refine_chain = refine_prompt | llm | StrOutputParser()
+            with st.status("Summarizing...") as status:
+                for i, doc in enumerate(docs[1:]):
+                    status.update(
+                        label=f"Processing document {i+1}/{len(docs)-1} "
+                    )
+                    summary = refine_chain.invoke(
+                        {
+                            "existing_summary": summary,
+                            "context": doc.page_content,
+                        }
+                    )
+                    st.write(summary)
+            st.write(summary)
